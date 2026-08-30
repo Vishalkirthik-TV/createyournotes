@@ -52,3 +52,5 @@ C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Hol
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\HoldMyNo.B9E8682F.Up2Date
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\NoteWindow.baml
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\NoteWindow.g.cs
+C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\AllNotesWindow.baml
+C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\AllNotesWindow.g.cs

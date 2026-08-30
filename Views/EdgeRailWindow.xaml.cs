@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 using HoldMyNotes.Data;
@@ -17,48 +18,106 @@ namespace HoldMyNotes
     public partial class EdgeRailWindow : Window
     {
         // ============================================================
-        // GEOMETRY
+        // WINDOW / EDGE GEOMETRY
         // ============================================================
 
-        private const double WindowWidth = 220;
-        private const double WindowHeight = 620;
+        private const double WindowWidth = 360;
+        private const double WindowHeight = 720;
 
-        // Everything that touches the right side uses this edge.
         private const double RightEdge = WindowWidth;
 
-        // Resting rail.
-        private const double RailWidth = 14;
-        private const double RailLeft = RightEdge - RailWidth;
-        private const double RailTop = 258;
-        private const double RailHeight = 104;
 
-        // Resting pills.
+        // ============================================================
+        // RESTING RAIL
+        // ============================================================
+
+        private const double RailWidth = 14;
+
+        private const double RailLeft =
+            RightEdge - RailWidth;
+
+        private const double RailTop = 304;
+
+        private const double RailHeight = 112;
+
+
+        // ============================================================
+        // RESTING PILLS
+        // ============================================================
+
         private const double PillWidth = 7;
+
         private const double PillHeight = 22;
+
         private const double PillGap = 2;
 
-        // Fan-out tabs.
-        private const double FanTabWidth = 48;
-        private const double FanTabHeight = 58;
-        private const double FanTop = 58;
-        private const double FanGap = 2;
 
-        // Expanded note.
-        private const double ExpandedWidth = 155;
-        private const double ExpandedHeight = 128;
-        private const double ExpandedLeft = RightEdge - ExpandedWidth;
+        // ============================================================
+        // FAN-OUT
+        // ============================================================
 
-        // Add button.
+        private const int MaxVisibleCards = 5;
+
+        private const double TabWidth = 34;
+
+        private const double TabHeight = 125;
+
+        private const double TabGap = -7;
+
+        private const double StackOffsetX = 6;
+
+        private const double TabLeft =
+            RightEdge - TabWidth;
+
+        private const double TabStartTop = 40;
+
+        private double _centeredStartTop;
+
+
+        // ============================================================
+        // MORE / STACKED CARD
+        // ============================================================
+
+        private const double MoreHeight = 34;
+
+        private const double MoreLeft =
+            RightEdge - TabWidth;
+
+
+        // ============================================================
+        // EXPANDED NOTE
+        // ============================================================
+
+        private const double ExpandedWidth = 150;
+
+        private const double ExpandedHeight = 200;
+
+        private const double ExpandedLeft =
+            RightEdge - ExpandedWidth;
+
+
+        // ============================================================
+        // ADD BUTTON
+        // ============================================================
+
         private const double AddButtonSize = 30;
-        private const double AddButtonLeft = RightEdge - AddButtonSize;
-        private const double AddButtonTop = 530;
 
-        // Timing.
+        private const double AddButtonLeft =
+            RightEdge - AddButtonSize;
+
+
+        // ============================================================
+        // ANIMATION
+        // ============================================================
+
         private const int FanDurationMs = 210;
+
         private const int FanStaggerMs = 45;
-        private const int HoverDurationMs = 190;
-        private const int FadeDurationMs = 120;
+
+        private const int HoverDurationMs = 220;
+
         private const int CollapseDelayMs = 170;
+
 
         // ============================================================
         // DATA
@@ -66,18 +125,24 @@ namespace HoldMyNotes
 
         private readonly NoteRepository _noteRepository;
 
-        private List<Note> _notes = new();
+        private List<Note> _notes =
+            new List<Note>();
+
 
         // ============================================================
         // STATE
         // ============================================================
 
+        private readonly DispatcherTimer _collapseTimer;
+
         private bool _isOpen;
+
         private bool _isAnimating;
 
         private Border? _expandedTab;
 
-        private DispatcherTimer _collapseTimer;
+        private Border? _moreTab;
+
 
         // ============================================================
         // CONSTRUCTOR
@@ -87,197 +152,424 @@ namespace HoldMyNotes
         {
             InitializeComponent();
 
-            _noteRepository = new NoteRepository();
 
-            _collapseTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(CollapseDelayMs)
-            };
+            _noteRepository =
+                new NoteRepository();
 
-            _collapseTimer.Tick += CollapseTimer_Tick;
 
-            AddButton.Click += AddButton_Click;
+            _collapseTimer =
+                new DispatcherTimer
+                {
+                    Interval =
+                        TimeSpan.FromMilliseconds(
+                            CollapseDelayMs
+                        )
+                };
+
+
+            _collapseTimer.Tick +=
+                CollapseTimer_Tick;
+
+
+            AddButton.Click +=
+                AddButton_Click;
+
 
             LoadNotes();
+
             BuildIndicators();
+
             SetRestingState();
 
             PositionWindow();
         }
 
+
         // ============================================================
-        // POSITION
+        // WINDOW POSITION
         // ============================================================
 
         private void PositionWindow()
         {
-            Left = SystemParameters.WorkArea.Right - WindowWidth;
-            Top = (SystemParameters.WorkArea.Height - WindowHeight) / 2.0;
+            Left =
+                SystemParameters.WorkArea.Right -
+                WindowWidth;
+
+
+            Top =
+                (
+                    SystemParameters.WorkArea.Height -
+                    WindowHeight
+                ) / 2.0;
         }
 
-        protected override void OnContentRendered(EventArgs e)
+
+        protected override void OnContentRendered(
+            EventArgs e)
         {
             base.OnContentRendered(e);
+
             PositionWindow();
         }
 
-        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+
+        protected override void OnRenderSizeChanged(
+            SizeChangedInfo sizeInfo)
         {
-            base.OnRenderSizeChanged(sizeInfo);
+            base.OnRenderSizeChanged(
+                sizeInfo
+            );
+
             PositionWindow();
         }
+
 
         // ============================================================
-        // PUBLIC API USED BY MainWindow
+        // PUBLIC API USED BY MAINWINDOW
         // ============================================================
 
         public void Open()
         {
-            if (_isOpen || _isAnimating)
+            if (_isOpen)
+            {
                 return;
+            }
+
+
+            if (_isAnimating)
+            {
+                return;
+            }
+
 
             _collapseTimer.Stop();
+
+
             _isOpen = true;
+
 
             FanOutTabs();
         }
 
+
         public void CloseRail()
         {
-            if (!_isOpen || _isAnimating)
+            if (!_isOpen)
+            {
                 return;
+            }
+
+
+            if (_isAnimating)
+            {
+                return;
+            }
+
 
             _isOpen = false;
+
+
             _expandedTab = null;
+
 
             CollapseTabs();
         }
 
-        // ============================================================
-        // SCREEN EDGE
-        // ============================================================
-
-        private static bool IsCursorOnPhysicalScreenEdge()
-        {
-            if (!GetCursorPos(out POINT cursor))
-                return false;
-
-            int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
-            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-            int right = left + width;
-
-            // A physical edge pixel is NOT a note-card hover target.
-            return cursor.X >= right - 1;
-        }
 
         // ============================================================
         // HIT TEST
         // ============================================================
 
-        public bool IsMouseInsideVisibleArea(int screenX, int screenY)
+        public bool IsMouseInsideVisibleArea(
+            int screenX,
+            int screenY)
         {
-            // Do not use the literal screen edge as a card/rail hover
-            // target. MainWindow can still use its own edge trigger
-            // to open the rail.
-            if (IsAtVirtualScreenEdge(screenX))
-                return false;
-
-            Point point = PointFromScreen(
-                new Point(screenX, screenY)
-            );
-
-            // Resting rail.
-            if (!_isOpen)
+            /*
+             * The literal physical screen edge is NOT part of the
+             * visible hover area.
+             */
+            if (IsAtPhysicalRightEdge(screenX))
             {
-                Rect railRect = new Rect(
+                return false;
+            }
+
+
+            Point point =
+                PointFromScreen(
+                    new Point(
+                        screenX,
+                        screenY
+                    )
+                );
+
+
+            // ========================================================
+            // FAN-OUT STATE
+            // ========================================================
+
+            if (_isOpen)
+            {
+                // ----------------------------------------------------
+                // ADD BUTTON
+                // ----------------------------------------------------
+
+                if (AddButton.Visibility ==
+                    Visibility.Visible)
+                {
+                    double addLeft =
+                        Canvas.GetLeft(
+                            AddButton
+                        );
+
+
+                    double addTop =
+                        Canvas.GetTop(
+                            AddButton
+                        );
+
+
+                    if (double.IsNaN(addLeft))
+                    {
+                        addLeft =
+                            AddButtonLeft;
+                    }
+
+
+                    if (double.IsNaN(addTop))
+                    {
+                        addTop =
+                            GetCurrentAddButtonTop();
+                    }
+
+
+                    Rect addRect =
+                        new Rect(
+                            addLeft,
+                            addTop,
+                            AddButtonSize,
+                            AddButtonSize
+                        );
+
+
+                    if (addRect.Contains(point))
+                    {
+                        return true;
+                    }
+                }
+
+
+                // ----------------------------------------------------
+                // NOTE TABS
+                // ----------------------------------------------------
+
+                foreach (
+                    UIElement element
+                    in TabCanvas.Children)
+                {
+                    if (element is not Border tab)
+                    {
+                        continue;
+                    }
+
+
+                    if (tab.Visibility !=
+                        Visibility.Visible)
+                    {
+                        continue;
+                    }
+
+
+                    double width =
+                        tab.ActualWidth > 0
+                            ? tab.ActualWidth
+                            : TabWidth;
+
+
+                    double height =
+                        tab.ActualHeight > 0
+                            ? tab.ActualHeight
+                            : TabHeight;
+
+
+                    double left =
+                        Canvas.GetLeft(tab);
+
+
+                    double top =
+                        Canvas.GetTop(tab);
+
+
+                    if (double.IsNaN(left))
+                    {
+                        left =
+                            TabLeft;
+                    }
+
+
+                    if (double.IsNaN(top))
+                    {
+                        top =
+                            _centeredStartTop;
+                    }
+
+
+                    Rect tabRect =
+                        new Rect(
+                            left,
+                            top,
+                            width,
+                            height
+                        );
+
+
+                    if (tabRect.Contains(point))
+                    {
+                        return true;
+                    }
+                }
+
+
+                // ----------------------------------------------------
+                // MORE-NOTES STACK
+                // ----------------------------------------------------
+
+                if (_moreTab != null &&
+                    _moreTab.Visibility ==
+                    Visibility.Visible)
+                {
+                    double left =
+                        Canvas.GetLeft(
+                            _moreTab
+                        );
+
+
+                    double top =
+                        Canvas.GetTop(
+                            _moreTab
+                        );
+
+
+                    if (double.IsNaN(left))
+                    {
+                        left =
+                            MoreLeft;
+                    }
+
+
+                    if (double.IsNaN(top))
+                    {
+                        top =
+                            GetMoreTabTop();
+                    }
+
+
+                    Rect moreRect =
+                        new Rect(
+                            left,
+                            top,
+                            TabWidth,
+                            MoreHeight
+                        );
+
+
+                    if (moreRect.Contains(point))
+                    {
+                        return true;
+                    }
+                }
+
+
+                return false;
+            }
+
+
+            // ========================================================
+            // RESTING RAIL
+            // ========================================================
+
+            Rect railRect =
+                new Rect(
                     RailLeft,
                     RailTop,
                     RailWidth,
-                    RailHeight
+                    Rail.Height
                 );
 
-                return railRect.Contains(point);
-            }
 
-            // Add button.
-            if (AddButton.Visibility == Visibility.Visible)
-            {
-                Rect addRect = new Rect(
-                    AddButtonLeft,
-                    AddButtonTop,
-                    AddButtonSize,
-                    AddButtonSize
-                );
-
-                if (addRect.Contains(point))
-                    return true;
-            }
-
-            // Actual visible tabs, including an expanded tab.
-            foreach (UIElement element in TabCanvas.Children)
-            {
-                if (element is not Border tab ||
-                    tab.Visibility != Visibility.Visible)
-                    continue;
-
-                double width = tab.ActualWidth > 0
-                    ? tab.ActualWidth
-                    : FanTabWidth;
-
-                double height = tab.ActualHeight > 0
-                    ? tab.ActualHeight
-                    : FanTabHeight;
-
-                double left = Canvas.GetLeft(tab);
-                double top = Canvas.GetTop(tab);
-
-                Rect rect = new Rect(
-                    left,
-                    top,
-                    width,
-                    height
-                );
-
-                if (rect.Contains(point))
-                    return true;
-            }
-
-            // The rail itself is still a valid hover area while open.
-            Rect openRailRect = new Rect(
-                RailLeft,
-                RailTop,
-                RailWidth,
-                RailHeight
-            );
-
-            return openRailRect.Contains(point);
+            return railRect.Contains(point);
         }
 
-        private static bool IsAtVirtualScreenEdge(int screenX)
+
+        // ============================================================
+        // PHYSICAL SCREEN EDGE
+        // ============================================================
+
+        private static bool IsAtPhysicalRightEdge(
+            int screenX)
         {
-            int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
-            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-            int right = left + width;
+            int left =
+                GetSystemMetrics(
+                    SM_XVIRTUALSCREEN
+                );
+
+
+            int width =
+                GetSystemMetrics(
+                    SM_CXVIRTUALSCREEN
+                );
+
+
+            int right =
+                left + width;
+
 
             return screenX >= right - 1;
         }
 
+
+        private static bool IsCursorOnPhysicalScreenEdge()
+        {
+            if (!GetCursorPos(
+                    out POINT cursor
+                ))
+            {
+                return false;
+            }
+
+
+            return IsAtPhysicalRightEdge(
+                cursor.X
+            );
+        }
+
+
         // ============================================================
-        // DATABASE
+        // DATA
         // ============================================================
 
         private void LoadNotes()
         {
-            _notes = _noteRepository.GetAllNotes();
+            _notes =
+                _noteRepository.GetAllNotes()
+                ?? new List<Note>();
         }
+
 
         private void ReloadNotes()
         {
             LoadNotes();
+
+
             BuildIndicators();
 
+
             _expandedTab = null;
+
+            _moreTab = null;
+
+
             TabCanvas.Children.Clear();
+
 
             if (_isOpen)
             {
@@ -289,58 +581,111 @@ namespace HoldMyNotes
             }
         }
 
+
         // ============================================================
-        // RESTING INDICATORS
+        // RESTING RAIL
         // ============================================================
 
         private void BuildIndicators()
         {
             IndicatorStack.Children.Clear();
 
-            foreach (Note note in _notes)
-            {
-                Border pill = new Border
-                {
-                    Width = PillWidth,
-                    Height = PillHeight,
-                    CornerRadius = new CornerRadius(4),
-                    Background = CreateBrush(note.Color),
-                    Margin = new Thickness(
-                        0,
-                        PillGap,
-                        0,
-                        PillGap
-                    ),
-                    Tag = note.Id
-                };
 
-                IndicatorStack.Children.Add(pill);
+            int visibleCount =
+                Math.Min(
+                    MaxVisibleCards,
+                    _notes.Count
+                );
+
+
+            for (
+                int i = 0;
+                i < visibleCount;
+                i++)
+            {
+                Note note =
+                    _notes[i];
+
+
+                Border pill =
+                    new Border
+                    {
+                        Width =
+                            PillWidth,
+
+                        Height =
+                            PillHeight,
+
+                        CornerRadius =
+                            new CornerRadius(4),
+
+                        Background =
+                            CreateBrush(
+                                note.Color
+                            ),
+
+                        Margin =
+                            new Thickness(
+                                0,
+                                PillGap,
+                                0,
+                                PillGap
+                            ),
+
+                        Tag =
+                            note.Id,
+
+                        IsHitTestVisible =
+                            false
+                    };
+
+
+                IndicatorStack.Children.Add(
+                    pill
+                );
             }
 
+
+            /*
+             * Rail height remains based on maximum five pills.
+             */
             double requiredHeight =
                 Math.Max(
                     RailHeight,
                     12 +
-                    _notes.Count *
-                    (PillHeight + PillGap * 2)
+                    visibleCount *
+                    (
+                        PillHeight +
+                        PillGap * 2
+                    )
                 );
 
-            Rail.Height = requiredHeight;
 
-            double centeredTop =
-                RailTop +
-                (requiredHeight - 8 -
-                 (_notes.Count *
-                  (PillHeight + PillGap * 2))) / 2;
+            Rail.Height =
+                requiredHeight;
+
+
+            double indicatorHeight =
+                visibleCount *
+                (
+                    PillHeight +
+                    PillGap * 2
+                );
+
 
             Canvas.SetTop(
                 IndicatorStack,
+                RailTop +
                 Math.Max(
-                    RailTop + 5,
-                    centeredTop
+                    5,
+                    (
+                        requiredHeight -
+                        indicatorHeight
+                    ) / 2
                 )
             );
         }
+
 
         // ============================================================
         // FAN OUT
@@ -348,38 +693,108 @@ namespace HoldMyNotes
 
         private void FanOutTabs()
         {
-            _isAnimating = true;
+            _isAnimating =
+                true;
 
-            _expandedTab = null;
+
+            _expandedTab =
+                null;
+
+
+            _moreTab =
+                null;
+
 
             TabCanvas.Children.Clear();
 
+
             HideRestingRail();
 
-            for (int i = 0; i < _notes.Count; i++)
-            {
-                Border tab = CreateNoteTab(_notes[i], i);
 
-                // All fan-out tabs touch the right screen edge.
+            int visibleCount =
+                Math.Min(
+                    MaxVisibleCards,
+                    _notes.Count
+                );
+
+
+            // ========================================================
+            // CALCULATE THE ACTUAL CENTERED DECK POSITION
+            // ========================================================
+
+            double fanStep = 50;
+
+
+            double fanHeight =
+                visibleCount > 0
+                    ? TabHeight +
+                      (visibleCount - 1) *
+                      fanStep
+                    : 0;
+
+
+            _centeredStartTop =
+                (
+                    WindowHeight -
+                    fanHeight
+                ) / 2.0;
+
+
+            // ========================================================
+            // CREATE THE FIVE REAL TABS
+            // ========================================================
+
+            for (
+                int i = 0;
+                i < visibleCount;
+                i++)
+            {
+                Note note =
+                    _notes[i];
+
+
+                Border tab =
+                    CreateNoteTab(
+                        note
+                    );
+
+
+                /*
+                 * Every tab has exactly the same X.
+                 */
                 Canvas.SetLeft(
                     tab,
-                    RightEdge - FanTabWidth
+                    TabLeft
                 );
 
+
+                /*
+                 * Every tab starts from the SAME CENTERED
+                 * starting position.
+                 */
                 Canvas.SetTop(
                     tab,
-                    FanTop +
-                    i * (FanTabHeight + FanGap)
+                    _centeredStartTop
                 );
 
+
+                /*
+                 * Later cards are above earlier cards.
+                 */
                 Panel.SetZIndex(
                     tab,
                     200 + i
                 );
 
-                tab.Opacity = 0;
 
-                TabCanvas.Children.Add(tab);
+                tab.Opacity =
+                    0;
+
+
+                TabCanvas.Children.Add(
+                    tab
+                );
+
 
                 AnimateFanIn(
                     tab,
@@ -387,216 +802,915 @@ namespace HoldMyNotes
                 );
             }
 
+
+            // ========================================================
+            // MORE THAN FIVE
+            // ========================================================
+
+            if (_notes.Count >
+                MaxVisibleCards)
+            {
+                CreateMoreStackedTab(
+                    _notes.Count -
+                    MaxVisibleCards,
+
+                    visibleCount
+                );
+            }
+
+
+            // ========================================================
+            // ADD BUTTON
+            // ========================================================
+
+            /*
+             * Calculate from the SAME centered deck geometry.
+             */
+            double deckBottom =
+                GetFiveCardDeckBottom(
+                    visibleCount
+                );
+
+
+            /*
+             * If +N exists, extend the deck to include it.
+             */
+            if (_moreTab != null)
+            {
+                double moreTop =
+                    Canvas.GetTop(
+                        _moreTab
+                    );
+
+
+                if (double.IsNaN(moreTop))
+                {
+                    moreTop =
+                        GetMoreTabTop();
+                }
+
+
+                deckBottom =
+                    Math.Max(
+                        deckBottom,
+                        moreTop +
+                        MoreHeight
+                    );
+            }
+
+
+            /*
+             * + lives immediately below the deck.
+             */
+            double addButtonTop =
+                deckBottom + 8;
+
+
+            Canvas.SetLeft(
+                AddButton,
+                AddButtonLeft
+            );
+
+
+            Canvas.SetTop(
+                AddButton,
+                addButtonTop
+            );
+
+
+            /*
+             * + is visible only in Stage 2.
+             */
             ShowAddButton();
 
-            DispatcherTimer timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(
-                    FanDurationMs +
-                    (_notes.Count * FanStaggerMs) +
-                    20
-                )
-            };
 
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                _isAnimating = false;
-            };
+            // ========================================================
+            // FAN ANIMATION COMPLETE
+            // ========================================================
+
+            DispatcherTimer timer =
+                new DispatcherTimer
+                {
+                    Interval =
+                        TimeSpan.FromMilliseconds(
+                            FanDurationMs +
+                            visibleCount *
+                            FanStaggerMs +
+                            40
+                        )
+                };
+
+
+            timer.Tick +=
+                (_, _) =>
+                {
+                    timer.Stop();
+
+                    _isAnimating =
+                        false;
+                };
+
 
             timer.Start();
         }
 
-        private void AnimateFanIn(
-            Border tab,
-            int index)
+
+        // ============================================================
+        // ACTUAL FIVE-CARD DECK BOTTOM
+        // ============================================================
+
+        private double GetFiveCardDeckBottom(
+            int visibleCount)
         {
-            DoubleAnimation opacity = new DoubleAnimation
+            if (visibleCount <= 0)
             {
-                From = 0,
-                To = 1,
-                BeginTime = TimeSpan.FromMilliseconds(
-                    index * FanStaggerMs
-                ),
-                Duration = TimeSpan.FromMilliseconds(110),
-                EasingFunction = EaseOut()
-            };
+                return _centeredStartTop;
+            }
+
+
+            double lastCardTop =
+                _centeredStartTop +
+                (
+                    visibleCount - 1
+                ) *
+                50;
+
+
+            return
+                lastCardTop +
+                TabHeight;
+        }
+
+
+        // ============================================================
+        // FAN ANIMATION
+        // ============================================================
+
+        private void AnimateFanIn(
+    Border tab,
+    int index)
+        {
+            double targetTop =
+                _centeredStartTop +
+                index * 50;
+
+            int delay =
+                index *
+                FanStaggerMs;
+
+
+            // ------------------------------------------------------------
+            // START AT THE EDGE
+            // ------------------------------------------------------------
+
+            /*
+             * The card begins slightly inside the screen edge.
+             *
+             * Since the final X is TabLeft, we start at RightEdge
+             * and slide LEFT into position.
+             */
+            Canvas.SetLeft(
+                tab,
+                RightEdge
+            );
+
+
+            Canvas.SetTop(
+                tab,
+                targetTop
+            );
+
+
+            // ------------------------------------------------------------
+            // SLIDE IN FROM RIGHT EDGE
+            // ------------------------------------------------------------
+
+            tab.BeginAnimation(
+                Canvas.LeftProperty,
+
+                new DoubleAnimation
+                {
+                    From =
+                        RightEdge,
+
+                    To =
+                        TabLeft,
+
+                    BeginTime =
+                        TimeSpan.FromMilliseconds(
+                            delay
+                        ),
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            FanDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseOut()
+                }
+            );
+
+
+            // ------------------------------------------------------------
+            // SLIGHT OPACITY FADE
+            // ------------------------------------------------------------
 
             tab.BeginAnimation(
                 UIElement.OpacityProperty,
-                opacity
+
+                new DoubleAnimation
+                {
+                    From = 0,
+
+                    To = 1,
+
+                    BeginTime =
+                        TimeSpan.FromMilliseconds(
+                            delay
+                        ),
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            120
+                        ),
+
+                    EasingFunction =
+                        EaseOut()
+                }
             );
         }
 
+
         // ============================================================
-        // CREATE TAB
+        // MORE NOTES STACK
+        // ============================================================
+
+        private void CreateMoreStackedTab(
+            int extraCount,
+            int visibleCount)
+        {
+            /*
+             * IMPORTANT:
+             *
+             * +N is positioned relative to the CENTERED deck.
+             */
+            double top =
+                GetMoreTabTop();
+
+
+            Border stack =
+                new Border
+                {
+                    Width =
+                        TabWidth,
+
+                    Height =
+                        MoreHeight,
+
+                    Background =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                226,
+                                226,
+                                226
+                            )
+                        ),
+
+                    CornerRadius =
+                        new CornerRadius(
+                            12,
+                            0,
+                            0,
+                            12
+                        ),
+
+                    Cursor =
+                        Cursors.Hand,
+
+                    Tag =
+                        extraCount,
+
+                    Opacity =
+                        0,
+
+                    ToolTip =
+                        $"{extraCount} more notes"
+                };
+
+
+            Canvas.SetLeft(
+                stack,
+                MoreLeft
+            );
+
+
+            Canvas.SetTop(
+                stack,
+                top
+            );
+
+
+            Panel.SetZIndex(
+                stack,
+                190
+            );
+
+
+            Grid content =
+                new Grid();
+
+
+            TextBlock label =
+                new TextBlock
+                {
+                    Text =
+                        $"+{extraCount}",
+
+                    FontFamily =
+                        new FontFamily(
+                            "Segoe UI"
+                        ),
+
+                    FontSize = 9,
+
+                    Foreground =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                75,
+                                75,
+                                75
+                            )
+                        ),
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Center,
+
+                    VerticalAlignment =
+                        VerticalAlignment.Center,
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            content.Children.Add(
+                label
+            );
+
+
+            stack.Child =
+                content;
+
+
+            stack.MouseLeftButtonUp +=
+                MoreTab_Click;
+
+
+            TabCanvas.Children.Add(
+                stack
+            );
+
+
+            _moreTab =
+                stack;
+
+
+            stack.BeginAnimation(
+                UIElement.OpacityProperty,
+
+                new DoubleAnimation
+                {
+                    From =
+                        0,
+
+                    To =
+                        1,
+
+                    BeginTime =
+                        TimeSpan.FromMilliseconds(
+                            visibleCount *
+                            FanStaggerMs
+                        ),
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            120
+                        ),
+
+                    EasingFunction =
+                        EaseOut()
+                }
+            );
+        }
+
+
+        // ============================================================
+        // MORE TAB POSITION
+        // ============================================================
+
+        private double GetMoreTabTop()
+        {
+            int visibleCount =
+                Math.Min(
+                    MaxVisibleCards,
+                    _notes.Count
+                );
+
+
+            if (visibleCount <= 0)
+            {
+                return _centeredStartTop;
+            }
+
+
+            double lastCardTop =
+                _centeredStartTop +
+                (
+                    visibleCount - 1
+                ) *
+                50;
+
+
+            /*
+             * Put +N immediately after the actual bottom
+             * of the fifth overlapping card.
+             */
+            return
+                lastCardTop +
+                TabHeight -
+                8;
+        }
+
+
+        private void MoreTab_Click(
+            object sender,
+            MouseButtonEventArgs e)
+        {
+            if (!_isOpen ||
+                _isAnimating)
+            {
+                return;
+            }
+
+
+            OpenAllNotesWindow();
+
+
+            e.Handled =
+                true;
+        }
+
+
+        // ============================================================
+        // NOTE TAB
         // ============================================================
 
         private Border CreateNoteTab(
-            Note note,
-            int index)
+            Note note)
         {
-            Border tab = new Border
-            {
-                Width = FanTabWidth,
-                Height = FanTabHeight,
-
-                Background =
-                    CreateBrush(note.Color),
-
-                CornerRadius =
-                    new CornerRadius(
-                        14,
-                        0,
-                        0,
-                        14
-                    ),
-
-                Tag = note.Id,
-
-                Cursor = Cursors.Hand,
-
-                SnapsToDevicePixels = true
-            };
-
-            tab.Effect =
-                new System.Windows.Media.Effects.DropShadowEffect
+            Border tab =
+                new Border
                 {
-                    BlurRadius = 5,
-                    ShadowDepth = 1,
-                    Opacity = 0.13
+                    Width =
+                        TabWidth,
+
+                    Height =
+                        TabHeight,
+
+                    Background =
+                        CreateBrush(
+                            note.Color
+                        ),
+
+                    CornerRadius =
+                        new CornerRadius(
+                            12,
+                            0,
+                            0,
+                            12
+                        ),
+
+                    Tag =
+                        note.Id,
+
+                    Cursor =
+                        Cursors.Hand,
+
+                    SnapsToDevicePixels =
+                        true
                 };
 
-            Grid content = new Grid();
 
-            // --------------------------------------------------------
-            // FAN-OUT LABEL
-            // --------------------------------------------------------
+            tab.Effect =
+                new System.Windows.Media.Effects
+                    .DropShadowEffect
+                {
+                    BlurRadius = 5,
 
-            TextBlock label = new TextBlock
-            {
-                Text = note.Title.ToUpperInvariant(),
+                    ShadowDepth = 1,
 
-                FontFamily =
-                    new FontFamily("Segoe UI"),
+                    Opacity = 0.12
+                };
 
-                FontSize = 9,
 
-                Foreground =
-                    new SolidColorBrush(
-                        Color.FromRgb(
-                            78,
-                            78,
-                            78
-                        )
-                    ),
+            Grid content =
+                new Grid();
 
-                HorizontalAlignment =
-                    HorizontalAlignment.Center,
 
-                VerticalAlignment =
-                    VerticalAlignment.Center,
+            // ========================================================
+            // VERTICAL TITLE
+            // ========================================================
 
-                TextAlignment =
-                    TextAlignment.Center,
+            TextBlock label =
+                new TextBlock
+                {
+                    Text =
+                        note.Title
+                            .ToUpperInvariant(),
 
-                TextTrimming =
-                    TextTrimming.CharacterEllipsis
-            };
+                    FontFamily =
+                        new FontFamily(
+                            "Segoe UI"
+                        ),
 
+                    FontSize = 13,
+
+                    FontWeight =
+                        FontWeights.SemiBold,
+
+                    Foreground =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                78,
+                                78,
+                                78
+                            )
+                        ),
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Left,
+
+                    VerticalAlignment =
+                        VerticalAlignment.Center,
+
+                    TextAlignment =
+                        TextAlignment.Center,
+
+                    Margin =
+                        new Thickness(
+                            5,
+                            0,
+                            0,
+                            0
+                        ),
+
+                    TextTrimming =
+                        TextTrimming.CharacterEllipsis,
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            /*
+             * Your current corrected orientation.
+             */
             label.LayoutTransform =
-                new RotateTransform(90);
+                new RotateTransform(
+                    -90
+                );
 
-            content.Children.Add(label);
 
-            // --------------------------------------------------------
-            // EXPANDED CONTENT
-            // --------------------------------------------------------
+            content.Children.Add(
+                label
+            );
+
+
+            // ========================================================
+            // STAGE 3 PREVIEW
+            // ========================================================
 
             Grid preview =
-                CreateExpandedPreview(note);
+                CreateExpandedPreview(
+                    note
+                );
+
 
             preview.Visibility =
                 Visibility.Collapsed;
 
-            preview.Opacity = 0;
 
-            content.Children.Add(preview);
+            preview.Opacity =
+                0;
 
-            tab.Child = content;
 
-            // --------------------------------------------------------
-            // HOVER
-            // --------------------------------------------------------
+            content.Children.Add(
+                preview
+            );
 
-            tab.MouseEnter += (_, _) =>
-            {
-                TryExpandFromPointer(
-                    tab,
-                    label,
-                    preview
-                );
-            };
 
-            /*
-             * MouseMove is intentional here.
-             *
-             * If the cursor enters the tab while it is sitting on the
-             * physical screen edge, MouseEnter fires while the edge guard
-             * rejects the expansion. Moving one pixel inward does not fire
-             * MouseEnter again because the cursor is still inside the same
-             * Border. MouseMove closes that WPF event gap.
-             */
-            tab.MouseMove += (_, _) =>
-            {
-                TryExpandFromPointer(
-                    tab,
-                    label,
-                    preview
-                );
-            };
+            tab.Child =
+                content;
 
-            tab.MouseLeave += (_, _) =>
-            {
-                if (!_isOpen)
-                    return;
 
-                CollapseTab(
-                    tab,
-                    label,
-                    preview
-                );
-            };
+            // ========================================================
+            // HOVER ENTER
+            // ========================================================
 
-            // --------------------------------------------------------
+            tab.MouseEnter +=
+                (_, _) =>
+                {
+                    TryExpandFromPointer(
+                        tab,
+                        label,
+                        preview
+                    );
+                };
+
+
+            // ========================================================
+            // MOUSE MOVE
+            // ========================================================
+
+            tab.MouseMove +=
+                (_, _) =>
+                {
+                    TryExpandFromPointer(
+                        tab,
+                        label,
+                        preview
+                    );
+                };
+
+
+            // ========================================================
+            // HOVER LEAVE
+            // ========================================================
+
+            tab.MouseLeave +=
+                (_, _) =>
+                {
+                    CollapseTab(
+                        tab,
+                        label,
+                        preview
+                    );
+                };
+
+
+            // ========================================================
             // CLICK
-            // --------------------------------------------------------
+            // ========================================================
 
             tab.MouseLeftButtonUp +=
                 NoteTab_Click;
 
+
             return tab;
         }
 
+
         // ============================================================
-        // EXPANDED NOTE UI
+        // STAGE 3 PREVIEW
         // ============================================================
 
         private Grid CreateExpandedPreview(
             Note note)
         {
-            Grid preview = new Grid
-            {
-                Margin =
-                    new Thickness(
-                        16,
-                        12,
-                        14,
-                        12
-                    )
-            };
+            Grid preview =
+                new Grid
+                {
+                    Width =
+                        ExpandedWidth,
 
-            preview.RowDefinitions.Add(
+                    Height =
+                        ExpandedHeight,
+
+                    ClipToBounds =
+                        true,
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            Border paper =
+                new Border
+                {
+                    Width =
+                        ExpandedWidth,
+
+                    Height =
+                        ExpandedHeight,
+
+                    Background =
+                        CreateBrush(
+                            note.Color
+                        ),
+
+                    CornerRadius =
+                        new CornerRadius(
+                            26,
+                            0,
+                            0,
+                            26
+                        ),
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Left,
+
+                    VerticalAlignment =
+                        VerticalAlignment.Top,
+
+                    SnapsToDevicePixels =
+                        true,
+
+                    Effect =
+                        new System.Windows.Media.Effects
+                            .DropShadowEffect
+                        {
+                            BlurRadius = 14,
+
+                            ShadowDepth = 3,
+
+                            Direction = 270,
+
+                            Opacity = 0.16
+                        }
+                };
+
+
+            Grid paperGrid =
+                new Grid();
+
+
+            paperGrid.ColumnDefinitions.Add(
+                new ColumnDefinition
+                {
+                    Width =
+                        new GridLength(
+                            58
+                        )
+                }
+            );
+
+
+            paperGrid.ColumnDefinitions.Add(
+                new ColumnDefinition
+                {
+                    Width =
+                        new GridLength(
+                            1,
+                            GridUnitType.Star
+                        )
+                }
+            );
+
+
+            // ========================================================
+            // VERTICAL CATEGORY STRIP
+            // ========================================================
+
+            Grid strip =
+                new Grid();
+
+
+            TextBlock verticalCategory =
+                new TextBlock
+                {
+                    Text =
+                        note.Title
+                            .ToUpperInvariant(),
+
+                    FontFamily =
+                        new FontFamily(
+                            "Segoe UI"
+                        ),
+
+                    FontSize = 12,
+
+                    Foreground =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                76,
+                                76,
+                                76
+                            )
+                        ),
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Center,
+
+                    VerticalAlignment =
+                        VerticalAlignment.Center,
+
+                    TextAlignment =
+                        TextAlignment.Center,
+
+                    TextTrimming =
+                        TextTrimming
+                            .CharacterEllipsis,
+
+                    MaxWidth = 150,
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            verticalCategory.LayoutTransform =
+                new RotateTransform(
+                    -90
+                );
+
+
+            strip.Children.Add(
+                verticalCategory
+            );
+
+
+            // ========================================================
+            // PERFORATION
+            // ========================================================
+
+            Rectangle perforation =
+                new Rectangle
+                {
+                    Width = 1,
+
+                    HorizontalAlignment =
+                        HorizontalAlignment.Right,
+
+                    VerticalAlignment =
+                        VerticalAlignment.Stretch,
+
+                    Margin =
+                        new Thickness(
+                            0,
+                            16,
+                            0,
+                            16
+                        ),
+
+                    Stroke =
+                        new SolidColorBrush(
+                            Color.FromArgb(
+                                72,
+                                80,
+                                80,
+                                80
+                            )
+                        ),
+
+                    StrokeThickness = 1,
+
+                    StrokeDashArray =
+                        new DoubleCollection
+                        {
+                            9,
+                            8
+                        },
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            strip.Children.Add(
+                perforation
+            );
+
+
+            Grid.SetColumn(
+                strip,
+                0
+            );
+
+
+            paperGrid.Children.Add(
+                strip
+            );
+
+
+            // ========================================================
+            // MAIN CONTENT
+            // ========================================================
+
+            Grid main =
+                new Grid
+                {
+                    Margin =
+                        new Thickness(
+                            10,
+                            24,
+                            18,
+                            18
+                        )
+                };
+
+
+            main.RowDefinitions.Add(
                 new RowDefinition
                 {
                     Height =
@@ -604,7 +1718,8 @@ namespace HoldMyNotes
                 }
             );
 
-            preview.RowDefinitions.Add(
+
+            main.RowDefinitions.Add(
                 new RowDefinition
                 {
                     Height =
@@ -615,157 +1730,264 @@ namespace HoldMyNotes
                 }
             );
 
-            TextBlock title = new TextBlock
-            {
-                Text = note.Title,
 
-                FontFamily =
-                    new FontFamily("Segoe UI"),
+            // ========================================================
+            // TITLE
+            // ========================================================
 
-                FontSize = 15,
+            TextBlock title =
+                new TextBlock
+                {
+                    Text =
+                        note.Title,
 
-                FontWeight =
-                    FontWeights.Medium,
+                    FontFamily =
+                        new FontFamily(
+                            "Segoe UI"
+                        ),
 
-                Foreground =
-                    new SolidColorBrush(
-                        Color.FromRgb(
-                            42,
-                            42,
-                            42
+                    FontSize = 18,
+
+                    FontWeight =
+                        FontWeights.SemiBold,
+
+                    Foreground =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                35,
+                                35,
+                                35
+                            )
+                        ),
+
+                    TextTrimming =
+                        TextTrimming
+                            .CharacterEllipsis,
+
+                    IsHitTestVisible =
+                        false
+                };
+
+
+            Grid.SetRow(
+                title,
+                0
+            );
+
+
+            main.Children.Add(
+                title
+            );
+
+
+            // ========================================================
+            // BODY
+            // ========================================================
+
+            Grid bodyHost =
+                new Grid
+                {
+                    Margin =
+                        new Thickness(
+                            0,
+                            8,
+                            0,
+                            0
                         )
-                    ),
+                };
 
-                TextTrimming =
-                    TextTrimming.CharacterEllipsis
-            };
 
-            Grid.SetRow(title, 0);
+            TextBlock body =
+                new TextBlock
+                {
+                    Text =
+                        note.Content ??
+                        string.Empty,
 
-            preview.Children.Add(title);
+                    FontFamily =
+                        new FontFamily(
+                            "Segoe Print"
+                        ),
 
-            Grid bodyArea = new Grid();
+                    FontSize = 18,
 
-            TextBlock body = new TextBlock
-            {
-                Text =
-                    (note.Content ?? string.Empty)
-                    .Replace(
-                        Environment.NewLine,
-                        " "
-                    )
-                    .Replace(
-                        "\n",
-                        " "
-                    )
-                    .Trim(),
+                    LineHeight = 27,
 
-                FontFamily =
-                    new FontFamily("Segoe UI"),
+                    Foreground =
+                        new SolidColorBrush(
+                            Color.FromRgb(
+                                48,
+                                48,
+                                48
+                            )
+                        ),
 
-                FontSize = 12,
+                    TextWrapping =
+                        TextWrapping.Wrap,
 
-                LineHeight = 16,
+                    IsHitTestVisible =
+                        false
+                };
 
-                Foreground =
-                    new SolidColorBrush(
-                        Color.FromRgb(
-                            62,
-                            62,
-                            62
-                        )
-                    ),
 
-                TextWrapping =
-                    TextWrapping.Wrap,
+            ScrollViewer bodyScroller =
+                new ScrollViewer
+                {
+                    VerticalScrollBarVisibility =
+                        ScrollBarVisibility.Hidden,
 
-                TextTrimming =
-                    TextTrimming.CharacterEllipsis,
+                    HorizontalScrollBarVisibility =
+                        ScrollBarVisibility.Disabled,
 
-                Margin =
-                    new Thickness(
-                        0,
-                        7,
-                        0,
-                        0
-                    )
-            };
+                    CanContentScroll =
+                        false,
 
-            bodyArea.Children.Add(body);
+                    IsHitTestVisible =
+                        false,
 
-            // Subtle bottom fade for long notes.
-            LinearGradientBrush fadeBrush =
+                    Content =
+                        body
+                };
+
+
+            bodyHost.Children.Add(
+                bodyScroller
+            );
+
+
+            // ========================================================
+            // COLOR-MATCHED FADE
+            // ========================================================
+
+            Color baseColor =
+                GetColor(
+                    note.Color
+                );
+
+
+            LinearGradientBrush fade =
                 new LinearGradientBrush
                 {
                     StartPoint =
-                        new Point(0, 0),
+                        new Point(
+                            0,
+                            0
+                        ),
 
                     EndPoint =
-                        new Point(0, 1)
+                        new Point(
+                            0,
+                            1
+                        )
                 };
 
-            fadeBrush.GradientStops.Add(
+
+            fade.GradientStops.Add(
                 new GradientStop(
                     Color.FromArgb(
                         0,
-                        255,
-                        255,
-                        255
+                        baseColor.R,
+                        baseColor.G,
+                        baseColor.B
                     ),
                     0
                 )
             );
 
-            fadeBrush.GradientStops.Add(
+
+            fade.GradientStops.Add(
                 new GradientStop(
                     Color.FromArgb(
-                        70,
-                        255,
-                        255,
-                        255
+                        35,
+                        baseColor.R,
+                        baseColor.G,
+                        baseColor.B
                     ),
-                    0.50
+                    0.35
                 )
             );
 
-            fadeBrush.GradientStops.Add(
+
+            fade.GradientStops.Add(
                 new GradientStop(
                     Color.FromArgb(
-                        235,
+                        190,
+                        baseColor.R,
+                        baseColor.G,
+                        baseColor.B
+                    ),
+                    0.78
+                )
+            );
+
+
+            fade.GradientStops.Add(
+                new GradientStop(
+                    Color.FromArgb(
                         255,
-                        255,
-                        255
+                        baseColor.R,
+                        baseColor.G,
+                        baseColor.B
                     ),
                     1
                 )
             );
 
-            Border fade = new Border
-            {
-                Height = 25,
 
-                VerticalAlignment =
-                    VerticalAlignment.Bottom,
+            bodyHost.Children.Add(
+                new Border
+                {
+                    Height = 34,
 
-                Background = fadeBrush,
+                    VerticalAlignment =
+                        VerticalAlignment.Bottom,
 
-                IsHitTestVisible = false
-            };
+                    Background =
+                        fade,
 
-            bodyArea.Children.Add(fade);
+                    IsHitTestVisible =
+                        false
+                }
+            );
+
 
             Grid.SetRow(
-                bodyArea,
+                bodyHost,
                 1
             );
 
-            preview.Children.Add(bodyArea);
+
+            main.Children.Add(
+                bodyHost
+            );
+
+
+            Grid.SetColumn(
+                main,
+                1
+            );
+
+
+            paperGrid.Children.Add(
+                main
+            );
+
+
+            paper.Child =
+                paperGrid;
+
+
+            preview.Children.Add(
+                paper
+            );
+
 
             return preview;
         }
 
+
         // ============================================================
-        // HOVER GATE
+        // STAGE 3 HOVER
         // ============================================================
 
         private void TryExpandFromPointer(
@@ -773,12 +1995,20 @@ namespace HoldMyNotes
             TextBlock label,
             Grid preview)
         {
-            if (!_isOpen ||
-                _isAnimating ||
-                IsCursorOnPhysicalScreenEdge())
-            {
+            if (!_isOpen)
                 return;
-            }
+
+
+            if (_isAnimating)
+                return;
+
+
+            /*
+             * Literal screen edge is never the Stage 3 trigger.
+             */
+            if (IsCursorOnPhysicalScreenEdge())
+                return;
+
 
             ExpandTab(
                 tab,
@@ -787,9 +2017,6 @@ namespace HoldMyNotes
             );
         }
 
-        // ============================================================
-        // EXPAND
-        // ============================================================
 
         private void ExpandTab(
             Border tab,
@@ -797,26 +2024,43 @@ namespace HoldMyNotes
             Grid preview)
         {
             if (_expandedTab == tab)
+            {
                 return;
+            }
 
+
+            /*
+             * Only one note can be expanded.
+             */
             if (_expandedTab != null)
             {
                 CollapseCurrentlyExpanded();
             }
 
-            _expandedTab = tab;
+
+            _expandedTab =
+                tab;
+
 
             Panel.SetZIndex(
                 tab,
                 1000
             );
 
-            // Right edge NEVER moves.
-            // ExpandedLeft + ExpandedWidth == RightEdge.
-            DoubleAnimation left =
+
+            /*
+             * Right edge remains fixed.
+             *
+             * ExpandedLeft + ExpandedWidth = RightEdge
+             */
+            DoubleAnimation leftAnimation =
                 new DoubleAnimation
                 {
-                    To = ExpandedLeft,
+                    From =
+                        Canvas.GetLeft(tab),
+
+                    To =
+                        ExpandedLeft,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -827,10 +2071,15 @@ namespace HoldMyNotes
                         EaseOut()
                 };
 
-            DoubleAnimation width =
+
+            DoubleAnimation widthAnimation =
                 new DoubleAnimation
                 {
-                    To = ExpandedWidth,
+                    From =
+                        TabWidth,
+
+                    To =
+                        ExpandedWidth,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -841,10 +2090,15 @@ namespace HoldMyNotes
                         EaseOut()
                 };
 
-            DoubleAnimation height =
+
+            DoubleAnimation heightAnimation =
                 new DoubleAnimation
                 {
-                    To = ExpandedHeight,
+                    From =
+                        TabHeight,
+
+                    To =
+                        ExpandedHeight,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -854,60 +2108,66 @@ namespace HoldMyNotes
                     EasingFunction =
                         EaseOut()
                 };
+
 
             tab.BeginAnimation(
                 Canvas.LeftProperty,
-                left
+                leftAnimation
             );
+
 
             tab.BeginAnimation(
                 FrameworkElement.WidthProperty,
-                width
+                widthAnimation
             );
+
 
             tab.BeginAnimation(
                 FrameworkElement.HeightProperty,
-                height
+                heightAnimation
             );
+
 
             AnimateOpacity(
                 label,
                 1,
                 0,
-                70
+                75
             );
+
 
             preview.Visibility =
                 Visibility.Visible;
 
-            DoubleAnimation previewFade =
+
+            preview.BeginAnimation(
+                UIElement.OpacityProperty,
+
                 new DoubleAnimation
                 {
                     From = 0,
+
                     To = 1,
 
                     BeginTime =
                         TimeSpan.FromMilliseconds(
-                            60
+                            65
                         ),
 
                     Duration =
                         TimeSpan.FromMilliseconds(
-                            FadeDurationMs
+                            150
                         ),
 
                     EasingFunction =
                         EaseOut()
-                };
-
-            preview.BeginAnimation(
-                UIElement.OpacityProperty,
-                previewFade
+                }
             );
         }
 
+
         // ============================================================
-        // COLLAPSE ONE TAB
+        // COLLAPSE EXPANDED NOTE
         // ============================================================
 
         private void CollapseTab(
@@ -916,7 +2176,10 @@ namespace HoldMyNotes
             Grid preview)
         {
             if (_expandedTab != tab)
+            {
                 return;
+            }
+
 
             CollapseTabInternal(
                 tab,
@@ -924,30 +2187,46 @@ namespace HoldMyNotes
                 preview
             );
 
-            _expandedTab = null;
+
+            _expandedTab =
+                null;
         }
+
 
         private void CollapseCurrentlyExpanded()
         {
             if (_expandedTab == null)
+            {
                 return;
+            }
 
-            if (_expandedTab.Child is not Grid grid)
+
+            if (_expandedTab.Child
+                is not Grid grid)
+            {
                 return;
+            }
+
 
             TextBlock? label = null;
+
             Grid? preview = null;
 
-            foreach (UIElement child in grid.Children)
+
+            foreach (
+                UIElement child
+                in grid.Children)
             {
                 if (child is TextBlock text)
+                {
                     label = text;
-
-                if (child is Grid nested &&
-                    nested.Visibility ==
-                    Visibility.Visible)
+                }
+                else if (child is Grid nested)
+                {
                     preview = nested;
+                }
             }
+
 
             if (label != null &&
                 preview != null)
@@ -959,8 +2238,11 @@ namespace HoldMyNotes
                 );
             }
 
-            _expandedTab = null;
+
+            _expandedTab =
+                null;
         }
+
 
         private void CollapseTabInternal(
             Border tab,
@@ -971,15 +2253,15 @@ namespace HoldMyNotes
                 preview,
                 1,
                 0,
-                80
+                85
             );
+
 
             DoubleAnimation left =
                 new DoubleAnimation
                 {
                     To =
-                        RightEdge -
-                        FanTabWidth,
+                        TabLeft,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -989,11 +2271,13 @@ namespace HoldMyNotes
                     EasingFunction =
                         EaseInOut()
                 };
+
 
             DoubleAnimation width =
                 new DoubleAnimation
                 {
-                    To = FanTabWidth,
+                    To =
+                        TabWidth,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -1003,11 +2287,13 @@ namespace HoldMyNotes
                     EasingFunction =
                         EaseInOut()
                 };
+
 
             DoubleAnimation height =
                 new DoubleAnimation
                 {
-                    To = FanTabHeight,
+                    To =
+                        TabHeight,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -1018,33 +2304,40 @@ namespace HoldMyNotes
                         EaseInOut()
                 };
 
-            left.Completed += (_, _) =>
-            {
-                preview.Visibility =
-                    Visibility.Collapsed;
 
-                Panel.SetZIndex(
-                    tab,
-                    200
-                );
+            left.Completed +=
+                (_, _) =>
+                {
+                    preview.Visibility =
+                        Visibility.Collapsed;
 
-                AnimateOpacity(
-                    label,
-                    0,
-                    1,
-                    90
-                );
-            };
+
+                    Panel.SetZIndex(
+                        tab,
+                        200
+                    );
+
+
+                    AnimateOpacity(
+                        label,
+                        0,
+                        1,
+                        90
+                    );
+                };
+
 
             tab.BeginAnimation(
                 Canvas.LeftProperty,
                 left
             );
 
+
             tab.BeginAnimation(
                 FrameworkElement.WidthProperty,
                 width
             );
+
 
             tab.BeginAnimation(
                 FrameworkElement.HeightProperty,
@@ -1052,37 +2345,53 @@ namespace HoldMyNotes
             );
         }
 
+
         // ============================================================
-        // FAN COLLAPSE
+        // COLLAPSE EVERYTHING
         // ============================================================
 
         private void CollapseTabs()
         {
-            _isAnimating = true;
+            _isAnimating =
+                true;
 
-            _expandedTab = null;
 
-            foreach (UIElement element in TabCanvas.Children)
+            _expandedTab =
+                null;
+
+
+            foreach (
+                UIElement element
+                in TabCanvas.Children)
             {
                 if (element is not Border tab)
+                {
                     continue;
+                }
+
 
                 tab.BeginAnimation(
                     FrameworkElement.WidthProperty,
                     null
                 );
 
+
                 tab.BeginAnimation(
                     FrameworkElement.HeightProperty,
                     null
                 );
 
-                DoubleAnimation left =
+
+                /*
+                 * All cards return directly toward the edge.
+                 */
+                tab.BeginAnimation(
+                    Canvas.LeftProperty,
+
                     new DoubleAnimation
                     {
                         To =
-                            RightEdge -
-                            FanTabWidth,
+                            RightEdge,
 
                         Duration =
                             TimeSpan.FromMilliseconds(
@@ -1091,9 +2400,13 @@ namespace HoldMyNotes
 
                         EasingFunction =
                             EaseIn()
-                    };
+                    }
+                );
 
-                DoubleAnimation opacity =
+
+                tab.BeginAnimation(
+                    UIElement.OpacityProperty,
+
                     new DoubleAnimation
                     {
                         To = 0,
@@ -1105,20 +2418,16 @@ namespace HoldMyNotes
 
                         EasingFunction =
                             EaseIn()
-                    };
-
-                tab.BeginAnimation(
-                    Canvas.LeftProperty,
-                    left
-                );
-
-                tab.BeginAnimation(
-                    UIElement.OpacityProperty,
-                    opacity
+                    }
                 );
             }
 
+
+            /*
+             * + disappears when Stage 2 closes.
+             */
             HideAddButton();
+
 
             DispatcherTimer timer =
                 new DispatcherTimer
@@ -1129,32 +2438,53 @@ namespace HoldMyNotes
                         )
                 };
 
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
 
-                TabCanvas.Children.Clear();
+            timer.Tick +=
+                (_, _) =>
+                {
+                    timer.Stop();
 
-                ShowRestingRail();
 
-                _isAnimating = false;
-            };
+                    TabCanvas.Children.Clear();
+
+
+                    _moreTab =
+                        null;
+
+
+                    ShowRestingRail();
+
+
+                    _isAnimating =
+                        false;
+                };
+
 
             timer.Start();
         }
 
+
         // ============================================================
-        // RAIL VISIBILITY
+        // RESTING RAIL VISIBILITY
         // ============================================================
 
         private void HideRestingRail()
         {
+            Rail.Visibility =
+                Visibility.Visible;
+
+
+            IndicatorStack.Visibility =
+                Visibility.Visible;
+
+
             AnimateOpacity(
                 Rail,
                 1,
                 0,
                 120
             );
+
 
             AnimateOpacity(
                 IndicatorStack,
@@ -1164,13 +2494,16 @@ namespace HoldMyNotes
             );
         }
 
+
         private void ShowRestingRail()
         {
             Rail.Visibility =
                 Visibility.Visible;
 
+
             IndicatorStack.Visibility =
                 Visibility.Visible;
+
 
             AnimateOpacity(
                 Rail,
@@ -1179,6 +2512,7 @@ namespace HoldMyNotes
                 140
             );
 
+
             AnimateOpacity(
                 IndicatorStack,
                 0,
@@ -1186,26 +2520,46 @@ namespace HoldMyNotes
                 160
             );
 
+
             HideAddButton();
         }
+
 
         private void SetRestingState()
         {
             TabCanvas.Children.Clear();
 
-            _expandedTab = null;
+
+            _expandedTab =
+                null;
+
+
+            _moreTab =
+                null;
+
 
             Rail.Visibility =
                 Visibility.Visible;
 
+
             IndicatorStack.Visibility =
                 Visibility.Visible;
 
-            Rail.Opacity = 1;
-            IndicatorStack.Opacity = 1;
 
+            Rail.Opacity =
+                1;
+
+
+            IndicatorStack.Opacity =
+                1;
+
+
+            /*
+             * No + in Stage 1.
+             */
             HideAddButton();
         }
+
 
         // ============================================================
         // ADD BUTTON
@@ -1213,27 +2567,71 @@ namespace HoldMyNotes
 
         private void ShowAddButton()
         {
+            /*
+             * Only set X here.
+             *
+             * FanOutTabs() owns the Y coordinate.
+             */
             Canvas.SetLeft(
                 AddButton,
                 AddButtonLeft
             );
 
-            Canvas.SetTop(
-                AddButton,
-                AddButtonTop
-            );
 
             AddButton.Visibility =
                 Visibility.Visible;
 
-            AddButton.Opacity = 1;
+
+            AddButton.Opacity =
+                1;
         }
+
 
         private void HideAddButton()
         {
             AddButton.Visibility =
                 Visibility.Collapsed;
         }
+
+
+        private double GetCurrentAddButtonTop()
+        {
+            int visibleCount =
+                Math.Min(
+                    MaxVisibleCards,
+                    _notes.Count
+                );
+
+
+            double deckBottom =
+                GetFiveCardDeckBottom(
+                    visibleCount
+                );
+
+
+            if (_moreTab != null)
+            {
+                double moreTop =
+                    Canvas.GetTop(
+                        _moreTab
+                    );
+
+
+                if (!double.IsNaN(moreTop))
+                {
+                    deckBottom =
+                        Math.Max(
+                            deckBottom,
+                            moreTop +
+                            MoreHeight
+                        );
+                }
+            }
+
+
+            return deckBottom + 8;
+        }
+
 
         private void AddButton_Click(
             object sender,
@@ -1242,8 +2640,10 @@ namespace HoldMyNotes
             NoteWindow window =
                 new NoteWindow();
 
+
             bool? result =
                 window.ShowDialog();
+
 
             if (result == true)
             {
@@ -1251,8 +2651,38 @@ namespace HoldMyNotes
             }
         }
 
+
         // ============================================================
-        // NOTE CLICK
+        // ALL NOTES
+        // ============================================================
+
+        private void OpenAllNotesWindow()
+        {
+            AllNotesWindow window =
+                new AllNotesWindow();
+
+
+            window.NotesChanged +=
+                AllNotesWindow_NotesChanged;
+
+
+            window.Show();
+
+
+            window.Activate();
+        }
+
+
+        private void AllNotesWindow_NotesChanged(
+            object? sender,
+            EventArgs e)
+        {
+            ReloadNotes();
+        }
+
+
+        // ============================================================
+        // NOTE CLICK / EDIT
         // ============================================================
 
         private void NoteTab_Click(
@@ -1260,24 +2690,64 @@ namespace HoldMyNotes
             MouseButtonEventArgs e)
         {
             if (sender is not Border tab)
+            {
                 return;
+            }
 
-            if (tab.Tag is not int noteId)
+
+            int noteId;
+
+
+            if (tab.Tag is int intId)
+            {
+                noteId =
+                    intId;
+            }
+            else if (tab.Tag is long longId)
+            {
+                noteId =
+                    (int)longId;
+            }
+            else
+            {
                 return;
+            }
 
+
+            OpenNoteEditor(
+                noteId
+            );
+
+
+            e.Handled =
+                true;
+        }
+
+
+        private void OpenNoteEditor(
+            int noteId)
+        {
             Note? note =
                 _noteRepository.GetNote(
                     noteId
                 );
 
+
             if (note == null)
+            {
                 return;
+            }
+
 
             NoteWindow window =
-                new NoteWindow(note);
+                new NoteWindow(
+                    note
+                );
+
 
             bool? result =
                 window.ShowDialog();
+
 
             if (result == true)
             {
@@ -1285,21 +2755,27 @@ namespace HoldMyNotes
             }
         }
 
+
         // ============================================================
-        // OPACITY
+        // ANIMATION HELPERS
         // ============================================================
 
-        private void AnimateOpacity(
+        private static void AnimateOpacity(
             UIElement element,
             double from,
             double to,
             int duration)
         {
-            DoubleAnimation animation =
+            element.BeginAnimation(
+                UIElement.OpacityProperty,
+
                 new DoubleAnimation
                 {
-                    From = from,
-                    To = to,
+                    From =
+                        from,
+
+                    To =
+                        to,
 
                     Duration =
                         TimeSpan.FromMilliseconds(
@@ -1308,17 +2784,10 @@ namespace HoldMyNotes
 
                     EasingFunction =
                         EaseInOut()
-                };
-
-            element.BeginAnimation(
-                UIElement.OpacityProperty,
-                animation
+                }
             );
         }
 
-        // ============================================================
-        // EASING
-        // ============================================================
 
         private static CubicEase EaseOut()
         {
@@ -1329,6 +2798,7 @@ namespace HoldMyNotes
             };
         }
 
+
         private static CubicEase EaseIn()
         {
             return new CubicEase
@@ -1337,6 +2807,7 @@ namespace HoldMyNotes
                     EasingMode.EaseIn
             };
         }
+
 
         private static CubicEase EaseInOut()
         {
@@ -1347,46 +2818,43 @@ namespace HoldMyNotes
             };
         }
 
+
         // ============================================================
         // COLOR
         // ============================================================
 
-        private static SolidColorBrush CreateBrush(
+        private static Color GetColor(
             string color)
         {
             object? value =
-                ColorConverter.ConvertFromString(
-                    color
-                );
+                ColorConverter
+                    .ConvertFromString(
+                        color
+                    );
 
-            if (value is Color parsed)
-            {
-                return new SolidColorBrush(parsed);
-            }
 
-            return new SolidColorBrush(
-                Color.FromRgb(
+            return value is Color parsed
+                ? parsed
+                : Color.FromRgb(
                     255,
                     215,
                     90
-                )
+                );
+        }
+
+
+        private static SolidColorBrush CreateBrush(
+            string color)
+        {
+            return new SolidColorBrush(
+                GetColor(color)
             );
         }
 
+
         // ============================================================
-        // CLEANUP
+        // TIMER
         // ============================================================
-
-        protected override void OnClosed(
-            EventArgs e)
-        {
-            _collapseTimer.Stop();
-
-            _collapseTimer.Tick -=
-                CollapseTimer_Tick;
-
-            base.OnClosed(e);
-        }
 
         private void CollapseTimer_Tick(
             object? sender,
@@ -1394,32 +2862,49 @@ namespace HoldMyNotes
         {
             _collapseTimer.Stop();
 
+
             if (IsMouseOver)
+            {
                 return;
+            }
+
 
             CloseRail();
         }
+
 
         // ============================================================
         // WINDOWS API
         // ============================================================
 
         private const int SM_XVIRTUALSCREEN = 76;
+
         private const int SM_CXVIRTUALSCREEN = 78;
 
-        [DllImport("user32.dll")]
-        private static extern bool GetCursorPos(
-            out POINT lpPoint
-        );
 
-        [DllImport("user32.dll")]
+        [DllImport(
+            "user32.dll"
+        )]
         private static extern int GetSystemMetrics(
             int nIndex
         );
 
+
+        [DllImport(
+            "user32.dll"
+        )]
+        private static extern bool GetCursorPos(
+            out POINT lpPoint
+        );
+
+
+        [StructLayout(
+            LayoutKind.Sequential
+        )]
         private struct POINT
         {
             public int X;
+
             public int Y;
         }
     }

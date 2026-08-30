@@ -8,51 +8,66 @@
         ShowActivated="False"
         Topmost="True"
         ResizeMode="NoResize"
-        Width="220"
-        Height="620">
+        Width="360"
+        Height="720">
 
-    <Grid x:Name="RootGrid"
-          Background="Transparent"
+    <Grid Background="Transparent"
           ClipToBounds="False">
 
         <Canvas x:Name="RootCanvas"
-                Width="220"
-                Height="620"
+                Width="360"
+                Height="720"
                 ClipToBounds="False">
 
-            <!-- Dynamic note tabs/cards -->
-            <Canvas x:Name="TabCanvas"
-                    Width="220"
-                    Height="620"
-                    ClipToBounds="False"
-                    Panel.ZIndex="20"/>
+            <!-- ================================================= -->
+            <!-- DYNAMIC FAN-OUT TABS                              -->
+            <!-- ================================================= -->
 
-            <!-- Resting-state rail -->
+            <Canvas x:Name="TabCanvas"
+                    Width="360"
+                    Height="720"
+                    ClipToBounds="False"
+                    Panel.ZIndex="200"/>
+
+
+            <!-- ================================================= -->
+            <!-- RESTING GREY RAIL                                -->
+            <!-- ================================================= -->
+
             <Border x:Name="Rail"
                     Width="14"
-                    Height="104"
-                    Background="#FF4A4A4A"
+                    Height="112"
+                    Background="#FF3D3D3D"
                     CornerRadius="7,0,0,7"
-                    Canvas.Left="206"
-                    Canvas.Top="258"
+                    Canvas.Left="346"
+                    Canvas.Top="304"
                     Panel.ZIndex="100"/>
 
-            <!-- Colored note indicators -->
+
+            <!-- ================================================= -->
+            <!-- RESTING COLOURED PILLS                           -->
+            <!-- ================================================= -->
+
             <StackPanel x:Name="IndicatorStack"
                         Width="14"
-                        Canvas.Left="206"
-                        Canvas.Top="267"
+                        Canvas.Left="346"
+                        Canvas.Top="310"
                         HorizontalAlignment="Center"
                         Panel.ZIndex="110"/>
 
-            <!-- Add button: visible only in fan-out -->
+
+            <!-- ================================================= -->
+            <!-- ADD BUTTON                                        -->
+            <!-- ONLY VISIBLE DURING FAN-OUT                      -->
+            <!-- ================================================= -->
+
             <Button x:Name="AddButton"
                     Width="30"
                     Height="30"
-                    Canvas.Left="190"
-                    Canvas.Top="530"
+                    Canvas.Left="330"
+                    Canvas.Top="660"
                     Visibility="Collapsed"
-                    Panel.ZIndex="300"
+                    Panel.ZIndex="500"
                     Background="Transparent"
                     BorderThickness="0"
                     Padding="0"
@@ -60,24 +75,33 @@
                     ToolTip="Add note">
 
                 <Button.Template>
+
                     <ControlTemplate TargetType="Button">
+
                         <Grid>
+
                             <Ellipse Fill="#FFF1F1F1"
-                                     Stroke="#FFD8D8D8"
+                                     Stroke="#FFD0D0D0"
                                      StrokeThickness="1"/>
+
                             <TextBlock Text="+"
                                        FontFamily="Segoe UI"
                                        FontSize="20"
-                                       FontWeight="Normal"
-                                       Foreground="#FF555555"
+                                       Foreground="#FF454545"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        Margin="0,-2,0,0"/>
+
                         </Grid>
+
                     </ControlTemplate>
+
                 </Button.Template>
+
             </Button>
 
         </Canvas>
+
     </Grid>
+
 </Window>
