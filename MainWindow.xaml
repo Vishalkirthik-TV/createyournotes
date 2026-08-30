@@ -6,16 +6,49 @@
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
-        Width="8"
-        Height="300"
+        Width="24"
+        Height="150"
         ResizeMode="NoResize"
         ShowActivated="False">
 
-    <Border Background="#FF444444"
-            CornerRadius="4">
+    <Border Width="24"
+            Height="150"
+            Background="#FF3A3A3A"
+            CornerRadius="10,0,0,10"
+            Padding="5">
 
-        <Grid>
-        </Grid>
+        <StackPanel VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+
+            <!-- Note tab 1 -->
+            <Border Width="8"
+                    Height="20"
+                    Background="#FF7CC7FF"
+                    CornerRadius="4"
+                    Margin="0,2"/>
+
+            <!-- Note tab 2 -->
+            <Border Width="8"
+                    Height="20"
+                    Background="#FF9BE28F"
+                    CornerRadius="4"
+                    Margin="0,2"/>
+
+            <!-- Note tab 3 -->
+            <Border Width="8"
+                    Height="20"
+                    Background="#FFC7A6FF"
+                    CornerRadius="4"
+                    Margin="0,2"/>
+
+            <!-- Note tab 4 -->
+            <Border Width="8"
+                    Height="20"
+                    Background="#FFFFD95A"
+                    CornerRadius="4"
+                    Margin="0,2"/>
+
+        </StackPanel>
 
     </Border>
 

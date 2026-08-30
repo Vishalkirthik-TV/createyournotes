@@ -6,25 +6,91 @@
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
-        Width="250"
-        Height="300"
+        Width="280"
+        Height="360"
         ResizeMode="NoResize"
-        ShowActivated="False"
-        Opacity="0">
+        ShowActivated="False">
 
-    <Border Background="#DD222222"
-            CornerRadius="12">
+    <Grid>
 
-        <Grid>
+        <!--
+            Canvas gives us precise control over the
+            position of every note tab.
+        -->
 
-            <TextBlock Text="HoldMyNotes"
-                       Foreground="White"
-                       FontSize="20"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
+        <Canvas x:Name="TabCanvas">
 
-        </Grid>
 
-    </Border>
+            <!--
+                The ItemsControl creates one visual tab
+                for every Note in the Notes collection.
+            -->
+
+            <ItemsControl x:Name="NoteTabs"
+                          ItemsSource="{Binding Notes}">
+
+                <ItemsControl.ItemsPanel>
+
+                    <ItemsPanelTemplate>
+
+                        <Canvas />
+
+                    </ItemsPanelTemplate>
+
+                </ItemsControl.ItemsPanel>
+
+
+                <ItemsControl.ItemTemplate>
+
+                    <DataTemplate>
+
+                        <Border Width="42"
+                                Height="58"
+                                Background="{Binding Color}"
+                                CornerRadius="12,0,0,12"
+                                Padding="0">
+
+                            <Grid>
+
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="9"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FF303030"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center">
+
+                                    <TextBlock.LayoutTransform>
+
+                                        <RotateTransform Angle="-90"/>
+
+                                    </TextBlock.LayoutTransform>
+
+                                </TextBlock>
+
+                            </Grid>
+
+                        </Border>
+
+                    </DataTemplate>
+
+                </ItemsControl.ItemTemplate>
+
+            </ItemsControl>
+
+
+            <!-- Plus button -->
+
+            <Button x:Name="AddButton"
+                    Width="38"
+                    Height="38"
+                    Content="+"
+                    FontSize="22"
+                    Canvas.Left="234"
+                    Canvas.Top="310"/>
+
+        </Canvas>
+
+    </Grid>
 
 </Window>
