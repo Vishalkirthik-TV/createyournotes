@@ -7,64 +7,69 @@
         ShowInTaskbar="False"
         ShowActivated="False"
         Topmost="True"
+        ResizeMode="NoResize"
         Width="220"
-        Height="500"
-        ResizeMode="NoResize">
+        Height="620">
 
-    <Grid>
+    <Grid x:Name="RootGrid"
+          Background="Transparent"
+          ClipToBounds="False">
+
         <Canvas x:Name="RootCanvas"
                 Width="220"
-                Height="500"
+                Height="620"
                 ClipToBounds="False">
 
-            <!-- Dynamic fan-out tabs. -->
+            <!-- Dynamic note tabs/cards -->
             <Canvas x:Name="TabCanvas"
                     Width="220"
-                    Height="500"
+                    Height="620"
                     ClipToBounds="False"
                     Panel.ZIndex="20"/>
 
-            <!-- Resting grey rail. -->
+            <!-- Resting-state rail -->
             <Border x:Name="Rail"
-                    Width="20"
-                    Height="112"
-                    Canvas.Left="200"
-                    Canvas.Top="150"
-                    Background="#FF393939"
-                    CornerRadius="10"
+                    Width="14"
+                    Height="104"
+                    Background="#FF4A4A4A"
+                    CornerRadius="7,0,0,7"
+                    Canvas.Left="206"
+                    Canvas.Top="258"
                     Panel.ZIndex="100"/>
 
-            <!-- One colored pill for every note. -->
+            <!-- Colored note indicators -->
             <StackPanel x:Name="IndicatorStack"
-                        Width="20"
-                        Canvas.Left="200"
-                        Canvas.Top="157"
-                        Panel.ZIndex="110"
-                        IsHitTestVisible="False"/>
+                        Width="14"
+                        Canvas.Left="206"
+                        Canvas.Top="267"
+                        HorizontalAlignment="Center"
+                        Panel.ZIndex="110"/>
 
-            <!-- Visible only in fan-out state. -->
+            <!-- Add button: visible only in fan-out -->
             <Button x:Name="AddButton"
                     Width="30"
                     Height="30"
-                    Canvas.Left="187"
-                    Canvas.Top="360"
+                    Canvas.Left="190"
+                    Canvas.Top="530"
                     Visibility="Collapsed"
                     Panel.ZIndex="300"
-                    BorderThickness="0"
                     Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
                     Cursor="Hand"
                     ToolTip="Add note">
 
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Ellipse Fill="#FFE9E9E9"
-                                     Stroke="#FFD0D0D0"
+                            <Ellipse Fill="#FFF1F1F1"
+                                     Stroke="#FFD8D8D8"
                                      StrokeThickness="1"/>
-
                             <TextBlock Text="+"
+                                       FontFamily="Segoe UI"
                                        FontSize="20"
-                                       Foreground="#FF444444"
+                                       FontWeight="Normal"
+                                       Foreground="#FF555555"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        Margin="0,-2,0,0"/>

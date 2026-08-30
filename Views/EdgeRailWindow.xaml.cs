@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
+
 using HoldMyNotes.Data;
 using HoldMyNotes.Models;
 using HoldMyNotes.Views;
@@ -14,50 +17,56 @@ namespace HoldMyNotes
     public partial class EdgeRailWindow : Window
     {
         // ============================================================
-        // LAYOUT
+        // GEOMETRY
         // ============================================================
 
-        private const double RailLeft = 200;
-        private const double RailTop = 150;
-        private const double RailWidth = 20;
-        private const double RailMinHeight = 112;
+        private const double WindowWidth = 220;
+        private const double WindowHeight = 620;
 
-        private const double PillWidth = 8;
+        // Everything that touches the right side uses this edge.
+        private const double RightEdge = WindowWidth;
+
+        // Resting rail.
+        private const double RailWidth = 14;
+        private const double RailLeft = RightEdge - RailWidth;
+        private const double RailTop = 258;
+        private const double RailHeight = 104;
+
+        // Resting pills.
+        private const double PillWidth = 7;
         private const double PillHeight = 22;
         private const double PillGap = 2;
 
-        private const double FanLeft = 150;
-        private const double FanTop = 70;
-        private const double FanWidth = 48;
-        private const double FanHeight = 58;
-        private const double FanGap = 4;
+        // Fan-out tabs.
+        private const double FanTabWidth = 48;
+        private const double FanTabHeight = 58;
+        private const double FanTop = 58;
+        private const double FanGap = 2;
 
-        // The tab's right edge is ALWAYS 198.
-        // Normal: 150 + 48 = 198.
-        // Expanded: 43 + 155 = 198.
-        // Keeping this edge fixed prevents MouseLeave while expanding.
-        private const double FixedRight = 198;
+        // Expanded note.
         private const double ExpandedWidth = 155;
-        private const double ExpandedHeight = 120;
+        private const double ExpandedHeight = 128;
+        private const double ExpandedLeft = RightEdge - ExpandedWidth;
 
-        private const double AddLeft = 187;
-        private const double AddTop = 360;
-        private const double AddSize = 30;
+        // Add button.
+        private const double AddButtonSize = 30;
+        private const double AddButtonLeft = RightEdge - AddButtonSize;
+        private const double AddButtonTop = 530;
 
-        // ============================================================
-        // ANIMATION
-        // ============================================================
-
-        private const int FanDurationMs = 220;
-        private const int FanStaggerMs = 35;
+        // Timing.
+        private const int FanDurationMs = 210;
+        private const int FanStaggerMs = 45;
         private const int HoverDurationMs = 190;
+        private const int FadeDurationMs = 120;
+        private const int CollapseDelayMs = 170;
 
         // ============================================================
         // DATA
         // ============================================================
 
         private readonly NoteRepository _noteRepository;
-        private List<Note> _notes = new List<Note>();
+
+        private List<Note> _notes = new();
 
         // ============================================================
         // STATE
@@ -65,7 +74,10 @@ namespace HoldMyNotes
 
         private bool _isOpen;
         private bool _isAnimating;
+
         private Border? _expandedTab;
+
+        private DispatcherTimer _collapseTimer;
 
         // ============================================================
         // CONSTRUCTOR
@@ -76,6 +88,13 @@ namespace HoldMyNotes
             InitializeComponent();
 
             _noteRepository = new NoteRepository();
+
+            _collapseTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(CollapseDelayMs)
+            };
+
+            _collapseTimer.Tick += CollapseTimer_Tick;
 
             AddButton.Click += AddButton_Click;
 
@@ -92,8 +111,8 @@ namespace HoldMyNotes
 
         private void PositionWindow()
         {
-            Left = SystemParameters.WorkArea.Right - Width;
-            Top = (SystemParameters.WorkArea.Height - Height) / 2;
+            Left = SystemParameters.WorkArea.Right - WindowWidth;
+            Top = (SystemParameters.WorkArea.Height - WindowHeight) / 2.0;
         }
 
         protected override void OnContentRendered(EventArgs e)
@@ -102,8 +121,149 @@ namespace HoldMyNotes
             PositionWindow();
         }
 
+        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        {
+            base.OnRenderSizeChanged(sizeInfo);
+            PositionWindow();
+        }
+
         // ============================================================
-        // DATA
+        // PUBLIC API USED BY MainWindow
+        // ============================================================
+
+        public void Open()
+        {
+            if (_isOpen || _isAnimating)
+                return;
+
+            _collapseTimer.Stop();
+            _isOpen = true;
+
+            FanOutTabs();
+        }
+
+        public void CloseRail()
+        {
+            if (!_isOpen || _isAnimating)
+                return;
+
+            _isOpen = false;
+            _expandedTab = null;
+
+            CollapseTabs();
+        }
+
+        // ============================================================
+        // SCREEN EDGE
+        // ============================================================
+
+        private static bool IsCursorOnPhysicalScreenEdge()
+        {
+            if (!GetCursorPos(out POINT cursor))
+                return false;
+
+            int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            int right = left + width;
+
+            // A physical edge pixel is NOT a note-card hover target.
+            return cursor.X >= right - 1;
+        }
+
+        // ============================================================
+        // HIT TEST
+        // ============================================================
+
+        public bool IsMouseInsideVisibleArea(int screenX, int screenY)
+        {
+            // Do not use the literal screen edge as a card/rail hover
+            // target. MainWindow can still use its own edge trigger
+            // to open the rail.
+            if (IsAtVirtualScreenEdge(screenX))
+                return false;
+
+            Point point = PointFromScreen(
+                new Point(screenX, screenY)
+            );
+
+            // Resting rail.
+            if (!_isOpen)
+            {
+                Rect railRect = new Rect(
+                    RailLeft,
+                    RailTop,
+                    RailWidth,
+                    RailHeight
+                );
+
+                return railRect.Contains(point);
+            }
+
+            // Add button.
+            if (AddButton.Visibility == Visibility.Visible)
+            {
+                Rect addRect = new Rect(
+                    AddButtonLeft,
+                    AddButtonTop,
+                    AddButtonSize,
+                    AddButtonSize
+                );
+
+                if (addRect.Contains(point))
+                    return true;
+            }
+
+            // Actual visible tabs, including an expanded tab.
+            foreach (UIElement element in TabCanvas.Children)
+            {
+                if (element is not Border tab ||
+                    tab.Visibility != Visibility.Visible)
+                    continue;
+
+                double width = tab.ActualWidth > 0
+                    ? tab.ActualWidth
+                    : FanTabWidth;
+
+                double height = tab.ActualHeight > 0
+                    ? tab.ActualHeight
+                    : FanTabHeight;
+
+                double left = Canvas.GetLeft(tab);
+                double top = Canvas.GetTop(tab);
+
+                Rect rect = new Rect(
+                    left,
+                    top,
+                    width,
+                    height
+                );
+
+                if (rect.Contains(point))
+                    return true;
+            }
+
+            // The rail itself is still a valid hover area while open.
+            Rect openRailRect = new Rect(
+                RailLeft,
+                RailTop,
+                RailWidth,
+                RailHeight
+            );
+
+            return openRailRect.Contains(point);
+        }
+
+        private static bool IsAtVirtualScreenEdge(int screenX)
+        {
+            int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            int right = left + width;
+
+            return screenX >= right - 1;
+        }
+
+        // ============================================================
+        // DATABASE
         // ============================================================
 
         private void LoadNotes()
@@ -116,11 +276,11 @@ namespace HoldMyNotes
             LoadNotes();
             BuildIndicators();
 
-            RemoveAllTabs();
+            _expandedTab = null;
+            TabCanvas.Children.Clear();
 
             if (_isOpen)
             {
-                // Keep the rail in fan-out mode after a save/delete.
                 FanOutTabs();
             }
             else
@@ -130,104 +290,7 @@ namespace HoldMyNotes
         }
 
         // ============================================================
-        // PUBLIC API - MainWindow USES THESE
-        // ============================================================
-
-        public void Open()
-        {
-            if (_isOpen || _isAnimating)
-                return;
-
-            _isOpen = true;
-            FanOutTabs();
-        }
-
-        public void CloseRail()
-        {
-            if (!_isOpen)
-                return;
-
-            if (_isAnimating)
-                return;
-
-            _isOpen = false;
-            CollapseTabs();
-        }
-
-        // ============================================================
-        // PUBLIC HIT TEST - MainWindow USES THIS
-        // ============================================================
-
-        public bool IsMouseInsideVisibleArea(int screenX, int screenY)
-        {
-            Point point =
-                PointFromScreen(new Point(screenX, screenY));
-
-            // Rail.
-            if (new Rect(
-                    RailLeft,
-                    RailTop,
-                    RailWidth,
-                    Rail.Height).Contains(point))
-            {
-                return true;
-            }
-
-            // Add button.
-            if (AddButton.Visibility == Visibility.Visible &&
-                new Rect(
-                    AddLeft,
-                    AddTop,
-                    AddSize,
-                    AddSize).Contains(point))
-            {
-                return true;
-            }
-
-            // Fan-out tabs.
-            if (_isOpen)
-            {
-                foreach (UIElement element in TabCanvas.Children)
-                {
-                    if (element is not Border tab ||
-                        tab.Visibility != Visibility.Visible)
-                    {
-                        continue;
-                    }
-
-                    double left = Canvas.GetLeft(tab);
-                    double top = Canvas.GetTop(tab);
-
-                    if (double.IsNaN(left))
-                        left = FanLeft;
-
-                    if (double.IsNaN(top))
-                        top = FanTop;
-
-                    // Width/Height return the current effective
-                    // animated value in WPF.
-                    double width =
-                        tab.Width > 0 ? tab.Width : FanWidth;
-
-                    double height =
-                        tab.Height > 0 ? tab.Height : FanHeight;
-
-                    if (new Rect(
-                            left,
-                            top,
-                            width,
-                            height).Contains(point))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        // ============================================================
-        // INDICATORS
+        // RESTING INDICATORS
         // ============================================================
 
         private void BuildIndicators()
@@ -240,13 +303,15 @@ namespace HoldMyNotes
                 {
                     Width = PillWidth,
                     Height = PillHeight,
-                    CornerRadius = new CornerRadius(5),
+                    CornerRadius = new CornerRadius(4),
                     Background = CreateBrush(note.Color),
                     Margin = new Thickness(
                         0,
                         PillGap,
                         0,
-                        PillGap)
+                        PillGap
+                    ),
+                    Tag = note.Id
                 };
 
                 IndicatorStack.Children.Add(pill);
@@ -254,12 +319,27 @@ namespace HoldMyNotes
 
             double requiredHeight =
                 Math.Max(
-                    RailMinHeight,
+                    RailHeight,
+                    12 +
                     _notes.Count *
-                        (PillHeight + PillGap * 2) +
-                    10);
+                    (PillHeight + PillGap * 2)
+                );
 
             Rail.Height = requiredHeight;
+
+            double centeredTop =
+                RailTop +
+                (requiredHeight - 8 -
+                 (_notes.Count *
+                  (PillHeight + PillGap * 2))) / 2;
+
+            Canvas.SetTop(
+                IndicatorStack,
+                Math.Max(
+                    RailTop + 5,
+                    centeredTop
+                )
+            );
         }
 
         // ============================================================
@@ -268,112 +348,148 @@ namespace HoldMyNotes
 
         private void FanOutTabs()
         {
-            RemoveAllTabs();
-
-            Rail.IsHitTestVisible = false;
-            IndicatorStack.IsHitTestVisible = false;
-
-            Rail.Visibility = Visibility.Visible;
-            IndicatorStack.Visibility = Visibility.Visible;
-
-            if (_notes.Count == 0)
-            {
-                ShowAddButton();
-
-                FadeOut(Rail, 100);
-                FadeOut(IndicatorStack, 100);
-
-                return;
-            }
-
             _isAnimating = true;
+
+            _expandedTab = null;
+
+            TabCanvas.Children.Clear();
+
+            HideRestingRail();
 
             for (int i = 0; i < _notes.Count; i++)
             {
-                Border tab = CreateTab(_notes[i]);
+                Border tab = CreateNoteTab(_notes[i], i);
 
-                Canvas.SetLeft(tab, RailLeft);
-                Canvas.SetTop(tab, RailTop);
+                // All fan-out tabs touch the right screen edge.
+                Canvas.SetLeft(
+                    tab,
+                    RightEdge - FanTabWidth
+                );
 
-                Panel.SetZIndex(tab, 120 + i);
+                Canvas.SetTop(
+                    tab,
+                    FanTop +
+                    i * (FanTabHeight + FanGap)
+                );
+
+                Panel.SetZIndex(
+                    tab,
+                    200 + i
+                );
+
+                tab.Opacity = 0;
 
                 TabCanvas.Children.Add(tab);
 
-                double targetTop =
-                    FanTop + i * (FanHeight + FanGap);
-
-                Animate(
+                AnimateFanIn(
                     tab,
-                    Canvas.LeftProperty,
-                    RailLeft,
-                    FanLeft,
-                    FanDurationMs,
-                    i * FanStaggerMs);
-
-                Animate(
-                    tab,
-                    Canvas.TopProperty,
-                    RailTop,
-                    targetTop,
-                    FanDurationMs,
-                    i * FanStaggerMs);
+                    i
+                );
             }
-
-            FadeOut(Rail, 130);
-            FadeOut(IndicatorStack, 100);
 
             ShowAddButton();
 
-            FinishAnimationAfter(
-                FanDurationMs +
-                _notes.Count * FanStaggerMs +
-                30);
+            DispatcherTimer timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(
+                    FanDurationMs +
+                    (_notes.Count * FanStaggerMs) +
+                    20
+                )
+            };
+
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                _isAnimating = false;
+            };
+
+            timer.Start();
+        }
+
+        private void AnimateFanIn(
+            Border tab,
+            int index)
+        {
+            DoubleAnimation opacity = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                BeginTime = TimeSpan.FromMilliseconds(
+                    index * FanStaggerMs
+                ),
+                Duration = TimeSpan.FromMilliseconds(110),
+                EasingFunction = EaseOut()
+            };
+
+            tab.BeginAnimation(
+                UIElement.OpacityProperty,
+                opacity
+            );
         }
 
         // ============================================================
         // CREATE TAB
         // ============================================================
 
-        private Border CreateTab(Note note)
+        private Border CreateNoteTab(
+            Note note,
+            int index)
         {
             Border tab = new Border
             {
-                Width = FanWidth,
-                Height = FanHeight,
-                Background = CreateBrush(note.Color),
+                Width = FanTabWidth,
+                Height = FanTabHeight,
 
-                // The right side is attached to the edge.
-                // The left side is rounded.
-                CornerRadius = new CornerRadius(
-                    12,
-                    0,
-                    0,
-                    12),
+                Background =
+                    CreateBrush(note.Color),
+
+                CornerRadius =
+                    new CornerRadius(
+                        14,
+                        0,
+                        0,
+                        14
+                    ),
 
                 Tag = note.Id,
+
                 Cursor = Cursors.Hand,
 
-                SnapsToDevicePixels = true,
-                ClipToBounds = true
+                SnapsToDevicePixels = true
             };
+
+            tab.Effect =
+                new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    BlurRadius = 5,
+                    ShadowDepth = 1,
+                    Opacity = 0.13
+                };
 
             Grid content = new Grid();
 
             // --------------------------------------------------------
-            // NORMAL TAB LABEL
+            // FAN-OUT LABEL
             // --------------------------------------------------------
 
             TextBlock label = new TextBlock
             {
-                Text =
-                    (note.Title ?? "UNTITLED")
-                    .ToUpperInvariant(),
+                Text = note.Title.ToUpperInvariant(),
+
+                FontFamily =
+                    new FontFamily("Segoe UI"),
 
                 FontSize = 9,
 
                 Foreground =
                     new SolidColorBrush(
-                        Color.FromRgb(70, 70, 70)),
+                        Color.FromRgb(
+                            78,
+                            78,
+                            78
+                        )
+                    ),
 
                 HorizontalAlignment =
                     HorizontalAlignment.Center,
@@ -385,22 +501,26 @@ namespace HoldMyNotes
                     TextAlignment.Center,
 
                 TextTrimming =
-                    TextTrimming.CharacterEllipsis,
-
-                IsHitTestVisible = false
+                    TextTrimming.CharacterEllipsis
             };
 
             label.LayoutTransform =
                 new RotateTransform(90);
 
+            content.Children.Add(label);
+
             // --------------------------------------------------------
-            // EXPANDED PREVIEW
+            // EXPANDED CONTENT
             // --------------------------------------------------------
 
             Grid preview =
-                CreatePreview(note);
+                CreateExpandedPreview(note);
 
-            content.Children.Add(label);
+            preview.Visibility =
+                Visibility.Collapsed;
+
+            preview.Opacity = 0;
+
             content.Children.Add(preview);
 
             tab.Child = content;
@@ -411,13 +531,29 @@ namespace HoldMyNotes
 
             tab.MouseEnter += (_, _) =>
             {
-                if (!_isOpen)
-                    return;
-
-                ExpandTab(
+                TryExpandFromPointer(
                     tab,
                     label,
-                    preview);
+                    preview
+                );
+            };
+
+            /*
+             * MouseMove is intentional here.
+             *
+             * If the cursor enters the tab while it is sitting on the
+             * physical screen edge, MouseEnter fires while the edge guard
+             * rejects the expansion. Moving one pixel inward does not fire
+             * MouseEnter again because the cursor is still inside the same
+             * Border. MouseMove closes that WPF event gap.
+             */
+            tab.MouseMove += (_, _) =>
+            {
+                TryExpandFromPointer(
+                    tab,
+                    label,
+                    preview
+                );
             };
 
             tab.MouseLeave += (_, _) =>
@@ -425,46 +561,48 @@ namespace HoldMyNotes
                 if (!_isOpen)
                     return;
 
-                CollapseTab(tab);
+                CollapseTab(
+                    tab,
+                    label,
+                    preview
+                );
             };
 
             // --------------------------------------------------------
             // CLICK
             // --------------------------------------------------------
 
-            tab.MouseLeftButtonUp += NoteTab_Click;
+            tab.MouseLeftButtonUp +=
+                NoteTab_Click;
 
             return tab;
         }
 
         // ============================================================
-        // PREVIEW
+        // EXPANDED NOTE UI
         // ============================================================
 
-        private Grid CreatePreview(Note note)
+        private Grid CreateExpandedPreview(
+            Note note)
         {
             Grid preview = new Grid
             {
-                Visibility = Visibility.Collapsed,
-                Opacity = 0,
-
-                // The preview is visual only.
-                // The Border itself owns mouse hit-testing.
-                IsHitTestVisible = false,
-
-                Margin = new Thickness(
-                    13,
-                    10,
-                    10,
-                    9)
+                Margin =
+                    new Thickness(
+                        16,
+                        12,
+                        14,
+                        12
+                    )
             };
 
             preview.RowDefinitions.Add(
                 new RowDefinition
                 {
                     Height =
-                        new GridLength(24)
-                });
+                        GridLength.Auto
+                }
+            );
 
             preview.RowDefinitions.Add(
                 new RowDefinition
@@ -472,82 +610,139 @@ namespace HoldMyNotes
                     Height =
                         new GridLength(
                             1,
-                            GridUnitType.Star)
-                });
+                            GridUnitType.Star
+                        )
+                }
+            );
 
             TextBlock title = new TextBlock
             {
-                Text = note.Title ?? "UNTITLED",
-                FontSize = 14,
-                FontWeight = FontWeights.SemiBold,
+                Text = note.Title,
+
+                FontFamily =
+                    new FontFamily("Segoe UI"),
+
+                FontSize = 15,
+
+                FontWeight =
+                    FontWeights.Medium,
 
                 Foreground =
                     new SolidColorBrush(
-                        Color.FromRgb(40, 40, 40)),
+                        Color.FromRgb(
+                            42,
+                            42,
+                            42
+                        )
+                    ),
 
                 TextTrimming =
                     TextTrimming.CharacterEllipsis
             };
 
             Grid.SetRow(title, 0);
+
             preview.Children.Add(title);
 
-            Grid bodyGrid = new Grid();
+            Grid bodyArea = new Grid();
 
             TextBlock body = new TextBlock
             {
-                Text = note.Content ?? string.Empty,
+                Text =
+                    (note.Content ?? string.Empty)
+                    .Replace(
+                        Environment.NewLine,
+                        " "
+                    )
+                    .Replace(
+                        "\n",
+                        " "
+                    )
+                    .Trim(),
 
-                FontSize = 11,
-                LineHeight = 15,
+                FontFamily =
+                    new FontFamily("Segoe UI"),
+
+                FontSize = 12,
+
+                LineHeight = 16,
 
                 Foreground =
                     new SolidColorBrush(
-                        Color.FromRgb(65, 65, 65)),
+                        Color.FromRgb(
+                            62,
+                            62,
+                            62
+                        )
+                    ),
 
                 TextWrapping =
                     TextWrapping.Wrap,
 
                 TextTrimming =
-                    TextTrimming.CharacterEllipsis
+                    TextTrimming.CharacterEllipsis,
+
+                Margin =
+                    new Thickness(
+                        0,
+                        7,
+                        0,
+                        0
+                    )
             };
 
-            bodyGrid.Children.Add(body);
+            bodyArea.Children.Add(body);
 
-            // --------------------------------------------------------
-            // SOFT BOTTOM FADE
-            // --------------------------------------------------------
-
+            // Subtle bottom fade for long notes.
             LinearGradientBrush fadeBrush =
                 new LinearGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(0, 1)
+                    StartPoint =
+                        new Point(0, 0),
+
+                    EndPoint =
+                        new Point(0, 1)
                 };
 
             fadeBrush.GradientStops.Add(
                 new GradientStop(
-                    Color.FromArgb(0, 255, 255, 255),
-                    0.00));
+                    Color.FromArgb(
+                        0,
+                        255,
+                        255,
+                        255
+                    ),
+                    0
+                )
+            );
 
             fadeBrush.GradientStops.Add(
                 new GradientStop(
-                    Color.FromArgb(30, 255, 255, 255),
-                    0.45));
+                    Color.FromArgb(
+                        70,
+                        255,
+                        255,
+                        255
+                    ),
+                    0.50
+                )
+            );
 
             fadeBrush.GradientStops.Add(
                 new GradientStop(
-                    Color.FromArgb(175, 255, 255, 255),
-                    0.82));
-
-            fadeBrush.GradientStops.Add(
-                new GradientStop(
-                    Color.FromArgb(255, 255, 255, 255),
-                    1.00));
+                    Color.FromArgb(
+                        235,
+                        255,
+                        255,
+                        255
+                    ),
+                    1
+                )
+            );
 
             Border fade = new Border
             {
-                Height = 30,
+                Height = 25,
 
                 VerticalAlignment =
                     VerticalAlignment.Bottom,
@@ -557,16 +752,43 @@ namespace HoldMyNotes
                 IsHitTestVisible = false
             };
 
-            bodyGrid.Children.Add(fade);
+            bodyArea.Children.Add(fade);
 
-            Grid.SetRow(bodyGrid, 1);
-            preview.Children.Add(bodyGrid);
+            Grid.SetRow(
+                bodyArea,
+                1
+            );
+
+            preview.Children.Add(bodyArea);
 
             return preview;
         }
 
         // ============================================================
-        // THIRD STATE - EXPAND
+        // HOVER GATE
+        // ============================================================
+
+        private void TryExpandFromPointer(
+            Border tab,
+            TextBlock label,
+            Grid preview)
+        {
+            if (!_isOpen ||
+                _isAnimating ||
+                IsCursorOnPhysicalScreenEdge())
+            {
+                return;
+            }
+
+            ExpandTab(
+                tab,
+                label,
+                preview
+            );
+        }
+
+        // ============================================================
+        // EXPAND
         // ============================================================
 
         private void ExpandTab(
@@ -577,216 +799,456 @@ namespace HoldMyNotes
             if (_expandedTab == tab)
                 return;
 
-            // If another card is expanded, collapse it first.
-            if (_expandedTab != null &&
-                _expandedTab != tab)
+            if (_expandedTab != null)
             {
-                CollapseTab(_expandedTab);
+                CollapseCurrentlyExpanded();
             }
 
             _expandedTab = tab;
 
-            Panel.SetZIndex(tab, 1000);
-
-            // --------------------------------------------------------
-            // IMPORTANT:
-            // Keep the RIGHT EDGE FIXED.
-            // --------------------------------------------------------
-
-            double expandedLeft =
-                FixedRight - ExpandedWidth;
-
-            double currentLeft =
-                Canvas.GetLeft(tab);
-
-            if (double.IsNaN(currentLeft))
-                currentLeft = FanLeft;
-
-            double currentWidth =
-                tab.Width > 0
-                    ? tab.Width
-                    : FanWidth;
-
-            double currentHeight =
-                tab.Height > 0
-                    ? tab.Height
-                    : FanHeight;
-
-            StopAnimation(
+            Panel.SetZIndex(
                 tab,
-                Canvas.LeftProperty);
+                1000
+            );
 
-            StopAnimation(
-                tab,
-                WidthProperty);
+            // Right edge NEVER moves.
+            // ExpandedLeft + ExpandedWidth == RightEdge.
+            DoubleAnimation left =
+                new DoubleAnimation
+                {
+                    To = ExpandedLeft,
 
-            StopAnimation(
-                tab,
-                HeightProperty);
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
 
-            // Move LEFT while growing RIGHT-EDGE remains fixed.
-            Animate(
-                tab,
+                    EasingFunction =
+                        EaseOut()
+                };
+
+            DoubleAnimation width =
+                new DoubleAnimation
+                {
+                    To = ExpandedWidth,
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseOut()
+                };
+
+            DoubleAnimation height =
+                new DoubleAnimation
+                {
+                    To = ExpandedHeight,
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseOut()
+                };
+
+            tab.BeginAnimation(
                 Canvas.LeftProperty,
-                currentLeft,
-                expandedLeft,
-                HoverDurationMs,
-                0);
+                left
+            );
 
-            Animate(
-                tab,
-                WidthProperty,
-                currentWidth,
-                ExpandedWidth,
-                HoverDurationMs,
-                0);
+            tab.BeginAnimation(
+                FrameworkElement.WidthProperty,
+                width
+            );
 
-            Animate(
-                tab,
-                HeightProperty,
-                currentHeight,
-                ExpandedHeight,
-                HoverDurationMs,
-                0);
+            tab.BeginAnimation(
+                FrameworkElement.HeightProperty,
+                height
+            );
 
-            // Hide vertical title.
-            FadeOut(label, 80);
+            AnimateOpacity(
+                label,
+                1,
+                0,
+                70
+            );
 
-            // Show content after expansion starts.
-            preview.Visibility = Visibility.Visible;
-            preview.Opacity = 0;
+            preview.Visibility =
+                Visibility.Visible;
 
-            DoubleAnimation previewAnimation =
+            DoubleAnimation previewFade =
                 new DoubleAnimation
                 {
                     From = 0,
                     To = 1,
 
                     BeginTime =
-                        TimeSpan.FromMilliseconds(45),
+                        TimeSpan.FromMilliseconds(
+                            60
+                        ),
 
                     Duration =
-                        TimeSpan.FromMilliseconds(135),
-
-                    FillBehavior =
-                        FillBehavior.HoldEnd,
+                        TimeSpan.FromMilliseconds(
+                            FadeDurationMs
+                        ),
 
                     EasingFunction =
-                        new CubicEase
-                        {
-                            EasingMode =
-                                EasingMode.EaseOut
-                        }
+                        EaseOut()
                 };
 
             preview.BeginAnimation(
                 UIElement.OpacityProperty,
-                previewAnimation);
+                previewFade
+            );
         }
 
         // ============================================================
-        // THIRD STATE - COLLAPSE
+        // COLLAPSE ONE TAB
         // ============================================================
 
-        private void CollapseTab(Border tab)
+        private void CollapseTab(
+            Border tab,
+            TextBlock label,
+            Grid preview)
         {
-            if (tab.Child is not Grid content)
+            if (_expandedTab != tab)
+                return;
+
+            CollapseTabInternal(
+                tab,
+                label,
+                preview
+            );
+
+            _expandedTab = null;
+        }
+
+        private void CollapseCurrentlyExpanded()
+        {
+            if (_expandedTab == null)
+                return;
+
+            if (_expandedTab.Child is not Grid grid)
                 return;
 
             TextBlock? label = null;
             Grid? preview = null;
 
-            foreach (UIElement child in content.Children)
+            foreach (UIElement child in grid.Children)
             {
                 if (child is TextBlock text)
                     label = text;
 
-                if (child is Grid grid)
-                    preview = grid;
+                if (child is Grid nested &&
+                    nested.Visibility ==
+                    Visibility.Visible)
+                    preview = nested;
             }
 
-            // Do not collapse a normal non-expanded tab.
-            if (_expandedTab != tab &&
-                tab.Width <= FanWidth + 0.5)
+            if (label != null &&
+                preview != null)
             {
-                return;
+                CollapseTabInternal(
+                    _expandedTab,
+                    label,
+                    preview
+                );
             }
 
-            double currentLeft =
-                Canvas.GetLeft(tab);
+            _expandedTab = null;
+        }
 
-            if (double.IsNaN(currentLeft))
-                currentLeft = FanLeft;
-
-            double currentWidth =
-                tab.Width > 0
-                    ? tab.Width
-                    : FanWidth;
-
-            double currentHeight =
-                tab.Height > 0
-                    ? tab.Height
-                    : FanHeight;
-
-            StopAnimation(
-                tab,
-                Canvas.LeftProperty);
-
-            StopAnimation(
-                tab,
-                WidthProperty);
-
-            StopAnimation(
-                tab,
-                HeightProperty);
-
-            if (preview != null)
-                FadeOut(preview, 70);
-
-            Animate(
-                tab,
-                Canvas.LeftProperty,
-                currentLeft,
-                FanLeft,
-                HoverDurationMs,
-                0);
-
-            Animate(
-                tab,
-                WidthProperty,
-                currentWidth,
-                FanWidth,
-                HoverDurationMs,
-                0);
-
-            Animate(
-                tab,
-                HeightProperty,
-                currentHeight,
-                FanHeight,
-                HoverDurationMs,
+        private void CollapseTabInternal(
+            Border tab,
+            TextBlock label,
+            Grid preview)
+        {
+            AnimateOpacity(
+                preview,
+                1,
                 0,
-                () =>
+                80
+            );
+
+            DoubleAnimation left =
+                new DoubleAnimation
                 {
-                    if (preview != null)
+                    To =
+                        RightEdge -
+                        FanTabWidth,
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseInOut()
+                };
+
+            DoubleAnimation width =
+                new DoubleAnimation
+                {
+                    To = FanTabWidth,
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseInOut()
+                };
+
+            DoubleAnimation height =
+                new DoubleAnimation
+                {
+                    To = FanTabHeight,
+
+                    Duration =
+                        TimeSpan.FromMilliseconds(
+                            HoverDurationMs
+                        ),
+
+                    EasingFunction =
+                        EaseInOut()
+                };
+
+            left.Completed += (_, _) =>
+            {
+                preview.Visibility =
+                    Visibility.Collapsed;
+
+                Panel.SetZIndex(
+                    tab,
+                    200
+                );
+
+                AnimateOpacity(
+                    label,
+                    0,
+                    1,
+                    90
+                );
+            };
+
+            tab.BeginAnimation(
+                Canvas.LeftProperty,
+                left
+            );
+
+            tab.BeginAnimation(
+                FrameworkElement.WidthProperty,
+                width
+            );
+
+            tab.BeginAnimation(
+                FrameworkElement.HeightProperty,
+                height
+            );
+        }
+
+        // ============================================================
+        // FAN COLLAPSE
+        // ============================================================
+
+        private void CollapseTabs()
+        {
+            _isAnimating = true;
+
+            _expandedTab = null;
+
+            foreach (UIElement element in TabCanvas.Children)
+            {
+                if (element is not Border tab)
+                    continue;
+
+                tab.BeginAnimation(
+                    FrameworkElement.WidthProperty,
+                    null
+                );
+
+                tab.BeginAnimation(
+                    FrameworkElement.HeightProperty,
+                    null
+                );
+
+                DoubleAnimation left =
+                    new DoubleAnimation
                     {
-                        preview.Visibility =
-                            Visibility.Collapsed;
+                        To =
+                            RightEdge -
+                            FanTabWidth,
 
-                        preview.Opacity = 0;
-                    }
+                        Duration =
+                            TimeSpan.FromMilliseconds(
+                                FanDurationMs
+                            ),
 
-                    if (label != null)
+                        EasingFunction =
+                            EaseIn()
+                    };
+
+                DoubleAnimation opacity =
+                    new DoubleAnimation
                     {
-                        label.Opacity = 0;
-                        FadeIn(label, 100);
-                    }
+                        To = 0,
 
-                    Panel.SetZIndex(tab, 120);
+                        Duration =
+                            TimeSpan.FromMilliseconds(
+                                150
+                            ),
 
-                    if (_expandedTab == tab)
-                        _expandedTab = null;
-                });
+                        EasingFunction =
+                            EaseIn()
+                    };
+
+                tab.BeginAnimation(
+                    Canvas.LeftProperty,
+                    left
+                );
+
+                tab.BeginAnimation(
+                    UIElement.OpacityProperty,
+                    opacity
+                );
+            }
+
+            HideAddButton();
+
+            DispatcherTimer timer =
+                new DispatcherTimer
+                {
+                    Interval =
+                        TimeSpan.FromMilliseconds(
+                            FanDurationMs + 30
+                        )
+                };
+
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+
+                TabCanvas.Children.Clear();
+
+                ShowRestingRail();
+
+                _isAnimating = false;
+            };
+
+            timer.Start();
+        }
+
+        // ============================================================
+        // RAIL VISIBILITY
+        // ============================================================
+
+        private void HideRestingRail()
+        {
+            AnimateOpacity(
+                Rail,
+                1,
+                0,
+                120
+            );
+
+            AnimateOpacity(
+                IndicatorStack,
+                1,
+                0,
+                100
+            );
+        }
+
+        private void ShowRestingRail()
+        {
+            Rail.Visibility =
+                Visibility.Visible;
+
+            IndicatorStack.Visibility =
+                Visibility.Visible;
+
+            AnimateOpacity(
+                Rail,
+                0,
+                1,
+                140
+            );
+
+            AnimateOpacity(
+                IndicatorStack,
+                0,
+                1,
+                160
+            );
+
+            HideAddButton();
+        }
+
+        private void SetRestingState()
+        {
+            TabCanvas.Children.Clear();
+
+            _expandedTab = null;
+
+            Rail.Visibility =
+                Visibility.Visible;
+
+            IndicatorStack.Visibility =
+                Visibility.Visible;
+
+            Rail.Opacity = 1;
+            IndicatorStack.Opacity = 1;
+
+            HideAddButton();
+        }
+
+        // ============================================================
+        // ADD BUTTON
+        // ============================================================
+
+        private void ShowAddButton()
+        {
+            Canvas.SetLeft(
+                AddButton,
+                AddButtonLeft
+            );
+
+            Canvas.SetTop(
+                AddButton,
+                AddButtonTop
+            );
+
+            AddButton.Visibility =
+                Visibility.Visible;
+
+            AddButton.Opacity = 1;
+        }
+
+        private void HideAddButton()
+        {
+            AddButton.Visibility =
+                Visibility.Collapsed;
+        }
+
+        private void AddButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            NoteWindow window =
+                new NoteWindow();
+
+            bool? result =
+                window.ShowDialog();
+
+            if (result == true)
+            {
+                ReloadNotes();
+            }
         }
 
         // ============================================================
@@ -804,12 +1266,13 @@ namespace HoldMyNotes
                 return;
 
             Note? note =
-                _noteRepository.GetNote(noteId);
+                _noteRepository.GetNote(
+                    noteId
+                );
 
             if (note == null)
                 return;
 
-            // Separate window for editing/viewing.
             NoteWindow window =
                 new NoteWindow(note);
 
@@ -820,231 +1283,17 @@ namespace HoldMyNotes
             {
                 ReloadNotes();
             }
-
-            e.Handled = true;
         }
 
         // ============================================================
-        // ADD
+        // OPACITY
         // ============================================================
 
-        private void AddButton_Click(
-            object sender,
-            RoutedEventArgs e)
-        {
-            // Separate window. No Owner is assigned.
-            NoteWindow window =
-                new NoteWindow();
-
-            bool? result =
-                window.ShowDialog();
-
-            if (result == true)
-            {
-                ReloadNotes();
-            }
-
-            e.Handled = true;
-        }
-
-        // ============================================================
-        // ADD BUTTON
-        // ============================================================
-
-        private void ShowAddButton()
-        {
-            Canvas.SetLeft(
-                AddButton,
-                AddLeft);
-
-            Canvas.SetTop(
-                AddButton,
-                AddTop);
-
-            AddButton.Visibility =
-                Visibility.Visible;
-
-            FadeIn(
-                AddButton,
-                120);
-        }
-
-        private void HideAddButton()
-        {
-            AddButton.Visibility =
-                Visibility.Collapsed;
-
-            AddButton.Opacity = 0;
-        }
-
-        // ============================================================
-        // RESTING STATE
-        // ============================================================
-
-        private void SetRestingState()
-        {
-            Rail.Visibility =
-                Visibility.Visible;
-
-            Rail.Opacity = 1;
-            Rail.IsHitTestVisible = true;
-
-            IndicatorStack.Visibility =
-                Visibility.Visible;
-
-            IndicatorStack.Opacity = 1;
-            IndicatorStack.IsHitTestVisible = false;
-
-            HideAddButton();
-
-            _expandedTab = null;
-        }
-
-        // ============================================================
-        // COLLAPSE WHOLE FAN
-        // ============================================================
-
-        private void CollapseTabs()
-        {
-            if (TabCanvas.Children.Count == 0)
-            {
-                SetRestingState();
-                return;
-            }
-
-            _isAnimating = true;
-            _expandedTab = null;
-
-            foreach (UIElement element in TabCanvas.Children)
-            {
-                if (element is not Border tab)
-                    continue;
-
-                double left =
-                    Canvas.GetLeft(tab);
-
-                if (double.IsNaN(left))
-                    left = FanLeft;
-
-                double top =
-                    Canvas.GetTop(tab);
-
-                if (double.IsNaN(top))
-                    top = FanTop;
-
-                double width =
-                    tab.Width > 0
-                        ? tab.Width
-                        : FanWidth;
-
-                double height =
-                    tab.Height > 0
-                        ? tab.Height
-                        : FanHeight;
-
-                StopAnimation(
-                    tab,
-                    Canvas.LeftProperty);
-
-                StopAnimation(
-                    tab,
-                    Canvas.TopProperty);
-
-                StopAnimation(
-                    tab,
-                    WidthProperty);
-
-                StopAnimation(
-                    tab,
-                    HeightProperty);
-
-                Animate(
-                    tab,
-                    Canvas.LeftProperty,
-                    left,
-                    RailLeft,
-                    FanDurationMs,
-                    0);
-
-                Animate(
-                    tab,
-                    Canvas.TopProperty,
-                    top,
-                    RailTop,
-                    FanDurationMs,
-                    0);
-
-                Animate(
-                    tab,
-                    WidthProperty,
-                    width,
-                    FanWidth,
-                    FanDurationMs,
-                    0);
-
-                Animate(
-                    tab,
-                    HeightProperty,
-                    height,
-                    FanHeight,
-                    FanDurationMs,
-                    0);
-            }
-
-            HideAddButton();
-
-            FadeIn(Rail, 150);
-            FadeIn(IndicatorStack, 180);
-
-            FinishCollapse();
-        }
-
-        private void FinishCollapse()
-        {
-            System.Windows.Threading.DispatcherTimer timer =
-                new System.Windows.Threading.DispatcherTimer
-                {
-                    Interval =
-                        TimeSpan.FromMilliseconds(
-                            FanDurationMs + 30)
-                };
-
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-
-                RemoveAllTabs();
-
-                SetRestingState();
-
-                _isAnimating = false;
-            };
-
-            timer.Start();
-        }
-
-        // ============================================================
-        // REMOVE TABS
-        // ============================================================
-
-        private void RemoveAllTabs()
-        {
-            TabCanvas.Children.Clear();
-            _expandedTab = null;
-        }
-
-        // ============================================================
-        // GENERIC ANIMATION
-        // ============================================================
-
-        private void Animate(
+        private void AnimateOpacity(
             UIElement element,
-            DependencyProperty property,
             double from,
             double to,
-            int durationMs,
-            int delayMs,
-            Action? completed = null)
+            int duration)
         {
             DoubleAnimation animation =
                 new DoubleAnimation
@@ -1052,169 +1301,126 @@ namespace HoldMyNotes
                     From = from,
                     To = to,
 
-                    BeginTime =
-                        TimeSpan.FromMilliseconds(
-                            delayMs),
-
                     Duration =
                         TimeSpan.FromMilliseconds(
-                            durationMs),
-
-                    // Keep the final value active.
-                    // Otherwise WPF would snap back to
-                    // the original Width/Left/Height.
-                    FillBehavior =
-                        FillBehavior.HoldEnd,
+                            duration
+                        ),
 
                     EasingFunction =
-                        new CubicEase
-                        {
-                            EasingMode =
-                                EasingMode.EaseInOut
-                        }
-                };
-
-            if (completed != null)
-            {
-                animation.Completed +=
-                    (_, _) => completed();
-            }
-
-            element.BeginAnimation(
-                property,
-                animation);
-        }
-
-        private void StopAnimation(
-            UIElement element,
-            DependencyProperty property)
-        {
-            // Caller reads the effective animated value BEFORE
-            // calling this method.
-            element.BeginAnimation(
-                property,
-                null);
-        }
-
-        private void FadeIn(
-            UIElement element,
-            int durationMs)
-        {
-            element.Visibility =
-                Visibility.Visible;
-
-            DoubleAnimation animation =
-                new DoubleAnimation
-                {
-                    From = element.Opacity,
-                    To = 1,
-
-                    Duration =
-                        TimeSpan.FromMilliseconds(
-                            durationMs),
-
-                    FillBehavior =
-                        FillBehavior.HoldEnd,
-
-                    EasingFunction =
-                        new CubicEase
-                        {
-                            EasingMode =
-                                EasingMode.EaseOut
-                        }
+                        EaseInOut()
                 };
 
             element.BeginAnimation(
                 UIElement.OpacityProperty,
-                animation);
+                animation
+            );
         }
 
-        private void FadeOut(
-            UIElement? element,
-            int durationMs)
+        // ============================================================
+        // EASING
+        // ============================================================
+
+        private static CubicEase EaseOut()
         {
-            if (element == null)
-                return;
-
-            DoubleAnimation animation =
-                new DoubleAnimation
-                {
-                    From = element.Opacity,
-                    To = 0,
-
-                    Duration =
-                        TimeSpan.FromMilliseconds(
-                            durationMs),
-
-                    FillBehavior =
-                        FillBehavior.HoldEnd,
-
-                    EasingFunction =
-                        new CubicEase
-                        {
-                            EasingMode =
-                                EasingMode.EaseIn
-                        }
-                };
-
-            element.BeginAnimation(
-                UIElement.OpacityProperty,
-                animation);
-        }
-
-        private void FinishAnimationAfter(
-            int milliseconds)
-        {
-            System.Windows.Threading.DispatcherTimer timer =
-                new System.Windows.Threading.DispatcherTimer
-                {
-                    Interval =
-                        TimeSpan.FromMilliseconds(
-                            milliseconds)
-                };
-
-            timer.Tick += (_, _) =>
+            return new CubicEase
             {
-                timer.Stop();
-                _isAnimating = false;
+                EasingMode =
+                    EasingMode.EaseOut
             };
+        }
 
-            timer.Start();
+        private static CubicEase EaseIn()
+        {
+            return new CubicEase
+            {
+                EasingMode =
+                    EasingMode.EaseIn
+            };
+        }
+
+        private static CubicEase EaseInOut()
+        {
+            return new CubicEase
+            {
+                EasingMode =
+                    EasingMode.EaseInOut
+            };
         }
 
         // ============================================================
         // COLOR
         // ============================================================
 
-        private SolidColorBrush CreateBrush(
-            string? color)
+        private static SolidColorBrush CreateBrush(
+            string color)
         {
-            if (!string.IsNullOrWhiteSpace(color))
-            {
-                object? converted =
-                    ColorConverter.ConvertFromString(
-                        color);
+            object? value =
+                ColorConverter.ConvertFromString(
+                    color
+                );
 
-                if (converted is Color parsed)
-                {
-                    return new SolidColorBrush(parsed);
-                }
+            if (value is Color parsed)
+            {
+                return new SolidColorBrush(parsed);
             }
 
             return new SolidColorBrush(
                 Color.FromRgb(
                     255,
                     215,
-                    90));
+                    90
+                )
+            );
         }
 
         // ============================================================
         // CLEANUP
         // ============================================================
 
-        protected override void OnClosed(EventArgs e)
+        protected override void OnClosed(
+            EventArgs e)
         {
+            _collapseTimer.Stop();
+
+            _collapseTimer.Tick -=
+                CollapseTimer_Tick;
+
             base.OnClosed(e);
+        }
+
+        private void CollapseTimer_Tick(
+            object? sender,
+            EventArgs e)
+        {
+            _collapseTimer.Stop();
+
+            if (IsMouseOver)
+                return;
+
+            CloseRail();
+        }
+
+        // ============================================================
+        // WINDOWS API
+        // ============================================================
+
+        private const int SM_XVIRTUALSCREEN = 76;
+        private const int SM_CXVIRTUALSCREEN = 78;
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(
+            out POINT lpPoint
+        );
+
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(
+            int nIndex
+        );
+
+        private struct POINT
+        {
+            public int X;
+            public int Y;
         }
     }
 }
