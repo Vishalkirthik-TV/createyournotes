@@ -40,10 +40,8 @@ namespace HoldMyNotes.Views
             _noteRepository =
                 new NoteRepository();
 
-
             DateTime now =
                 DateTime.Now;
-
 
             _note =
                 new Note
@@ -57,26 +55,19 @@ namespace HoldMyNotes.Views
                     UpdatedAt = now
                 };
 
-
-            _isNewNote =
-                true;
-
+            _isNewNote = true;
 
             _selectedColor =
                 _note.Color;
 
-
             _isPinned =
                 _note.IsPinned;
-
 
             _isComplete =
                 _note.IsCompleted;
 
-
             _autoSaveTimer =
                 CreateAutoSaveTimer();
-
 
             ConfigureForNewNote();
 
@@ -93,7 +84,6 @@ namespace HoldMyNotes.Views
 
             TitleTextBox.SelectAll();
 
-
             EnableAutoSave();
         }
 
@@ -105,30 +95,21 @@ namespace HoldMyNotes.Views
             _noteRepository =
                 new NoteRepository();
 
+            _note = note;
 
-            _note =
-                note;
-
-
-            _isNewNote =
-                false;
-
+            _isNewNote = false;
 
             _selectedColor =
                 note.Color;
 
-
             _isPinned =
                 note.IsPinned;
-
 
             _isComplete =
                 note.IsCompleted;
 
-
             _autoSaveTimer =
                 CreateAutoSaveTimer();
-
 
             LoadExistingNote();
 
@@ -142,7 +123,6 @@ namespace HoldMyNotes.Views
 
             AutoSaveStatusText.Text =
                 "Saved";
-
 
             EnableAutoSave();
         }
@@ -159,10 +139,8 @@ namespace HoldMyNotes.Views
                         )
                 };
 
-
             timer.Tick +=
                 AutoSaveTimer_Tick;
-
 
             return timer;
         }
@@ -170,13 +148,10 @@ namespace HoldMyNotes.Views
 
         private void EnableAutoSave()
         {
-            _autoSaveEnabled =
-                true;
-
+            _autoSaveEnabled = true;
 
             TitleTextBox.TextChanged +=
                 NoteTextBox_TextChanged;
-
 
             ContentTextBox.TextChanged +=
                 NoteTextBox_TextChanged;
@@ -185,13 +160,10 @@ namespace HoldMyNotes.Views
 
         private void DisableAutoSave()
         {
-            _autoSaveEnabled =
-                false;
-
+            _autoSaveEnabled = false;
 
             TitleTextBox.TextChanged -=
                 NoteTextBox_TextChanged;
-
 
             ContentTextBox.TextChanged -=
                 NoteTextBox_TextChanged;
@@ -208,14 +180,10 @@ namespace HoldMyNotes.Views
                 return;
             }
 
-
-            _hasUnsavedChanges =
-                true;
-
+            _hasUnsavedChanges = true;
 
             AutoSaveStatusText.Text =
                 "Saving...";
-
 
             RestartAutoSaveTimer();
         }
@@ -235,16 +203,12 @@ namespace HoldMyNotes.Views
         {
             _autoSaveTimer.Stop();
 
-
             if (_isClosing)
             {
                 return;
             }
 
-
-            SaveToDatabase(
-                false
-            );
+            SaveToDatabase(false);
         }
 
 
@@ -252,7 +216,6 @@ namespace HoldMyNotes.Views
         {
             DeleteButton.IsEnabled =
                 false;
-
 
             CompleteButton.Content =
                 "Mark complete";
@@ -264,14 +227,11 @@ namespace HoldMyNotes.Views
             TitleTextBox.Text =
                 _note.Title;
 
-
             ContentTextBox.Text =
                 _note.Content;
 
-
             DeleteButton.IsEnabled =
                 true;
-
 
             CompleteButton.Content =
                 _note.IsCompleted
@@ -286,10 +246,8 @@ namespace HoldMyNotes.Views
             string title =
                 TitleTextBox.Text.Trim();
 
-
             string content =
                 ContentTextBox.Text;
-
 
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -299,37 +257,29 @@ namespace HoldMyNotes.Views
                 return false;
             }
 
-
             if (!force &&
                 !_hasUnsavedChanges)
             {
                 return true;
             }
 
-
             _note.Title =
                 title;
-
 
             _note.Content =
                 content;
 
-
             _note.Color =
                 _selectedColor;
-
 
             _note.IsPinned =
                 _isPinned;
 
-
             _note.IsCompleted =
                 _isComplete;
 
-
             _note.UpdatedAt =
                 DateTime.Now;
-
 
             try
             {
@@ -340,14 +290,11 @@ namespace HoldMyNotes.Views
                             _note
                         );
 
-
                     _note.Id =
                         id;
 
-
                     _isNewNote =
                         false;
-
 
                     DeleteButton.IsEnabled =
                         true;
@@ -359,14 +306,11 @@ namespace HoldMyNotes.Views
                     );
                 }
 
-
                 _hasUnsavedChanges =
                     false;
 
-
                 AutoSaveStatusText.Text =
                     "Saved";
-
 
                 return true;
             }
@@ -374,7 +318,6 @@ namespace HoldMyNotes.Views
             {
                 AutoSaveStatusText.Text =
                     "Save failed";
-
 
                 if (force)
                 {
@@ -385,7 +328,6 @@ namespace HoldMyNotes.Views
                         MessageBoxImage.Error
                     );
                 }
-
 
                 return false;
             }
@@ -401,26 +343,21 @@ namespace HoldMyNotes.Views
                 return;
             }
 
-
             DeleteConfirmWindow dialog =
                 new DeleteConfirmWindow(
                     _note.Title
                 );
 
-
             dialog.Owner =
                 this;
 
-
             bool? result =
                 dialog.ShowDialog();
-
 
             if (result != true)
             {
                 return;
             }
-
 
             try
             {
@@ -430,14 +367,11 @@ namespace HoldMyNotes.Views
                     _note.Id
                 );
 
-
                 _isClosing =
                     true;
 
-
                 DialogResult =
                     true;
-
 
                 Close();
             }
@@ -460,17 +394,13 @@ namespace HoldMyNotes.Views
             _isComplete =
                 !_isComplete;
 
-
             UpdateCompleteVisual();
-
 
             _hasUnsavedChanges =
                 true;
 
-
             AutoSaveStatusText.Text =
                 "Saving...";
-
 
             RestartAutoSaveTimer();
         }
@@ -483,14 +413,22 @@ namespace HoldMyNotes.Views
                 CompleteButton.Content =
                     "Completed";
 
-
                 CompleteButton.Background =
                     new SolidColorBrush(
                         Color.FromArgb(
-                            55,
+                            85,
                             100,
-                            170,
-                            110
+                            175,
+                            112
+                        )
+                    );
+
+                CompleteButton.Foreground =
+                    new SolidColorBrush(
+                        Color.FromRgb(
+                            47,
+                            101,
+                            56
                         )
                     );
             }
@@ -499,14 +437,22 @@ namespace HoldMyNotes.Views
                 CompleteButton.Content =
                     "Mark complete";
 
-
                 CompleteButton.Background =
                     new SolidColorBrush(
                         Color.FromArgb(
-                            24,
+                            64,
                             255,
                             255,
                             255
+                        )
+                    );
+
+                CompleteButton.Foreground =
+                    new SolidColorBrush(
+                        Color.FromRgb(
+                            75,
+                            70,
+                            80
                         )
                     );
             }
@@ -522,32 +468,25 @@ namespace HoldMyNotes.Views
                 return;
             }
 
-
             if (button.Tag is not string color)
             {
                 return;
             }
 
-
             _selectedColor =
                 color;
-
 
             UpdateNoteSurfaceColor(
                 color
             );
 
-
             SelectCurrentColor();
-
 
             _hasUnsavedChanges =
                 true;
 
-
             AutoSaveStatusText.Text =
                 "Saving...";
-
 
             RestartAutoSaveTimer();
         }
@@ -564,7 +503,6 @@ namespace HoldMyNotes.Views
                 PurpleButton
             };
 
-
             foreach (
                 Button button
                 in buttons)
@@ -572,11 +510,9 @@ namespace HoldMyNotes.Views
                 button.BorderThickness =
                     new Thickness(0);
 
-
                 button.BorderBrush =
-                    null;
+                    Brushes.Transparent;
             }
-
 
             foreach (
                 Button button
@@ -588,16 +524,14 @@ namespace HoldMyNotes.Views
                     button.BorderThickness =
                         new Thickness(2);
 
-
                     button.BorderBrush =
                         new SolidColorBrush(
                             Color.FromRgb(
-                                90,
-                                82,
-                                100
+                                88,
+                                80,
+                                98
                             )
                         );
-
 
                     break;
                 }
@@ -613,12 +547,10 @@ namespace HoldMyNotes.Views
                     color
                 );
 
-
             if (converted is not Color parsedColor)
             {
                 return;
             }
-
 
             Color surfaceColor =
                 Color.FromRgb(
@@ -626,18 +558,15 @@ namespace HoldMyNotes.Views
                         parsedColor.R * 0.82 +
                         255 * 0.18
                     ),
-
                     (byte)(
                         parsedColor.G * 0.82 +
                         255 * 0.18
                     ),
-
                     (byte)(
                         parsedColor.B * 0.82 +
                         255 * 0.18
                     )
                 );
-
 
             NoteSurface.Background =
                 new SolidColorBrush(
@@ -655,49 +584,42 @@ namespace HoldMyNotes.Views
             object sender,
             RoutedEventArgs e)
         {
-            _isClosing =
-                true;
-
+            _isClosing = true;
 
             _autoSaveTimer.Stop();
 
-
             DisableAutoSave();
 
-
-            if (_hasUnsavedChanges)
-            {
-                SaveToDatabase(
-                    true
-                );
-            }
-            else if (_isNewNote)
+            if (_isNewNote)
             {
                 string title =
                     TitleTextBox.Text.Trim();
 
+                bool hasContent =
+                    !string.IsNullOrWhiteSpace(
+                        ContentTextBox.Text
+                    );
 
-                if (!string.Equals(
+                bool titleChanged =
+                    !string.Equals(
                         title,
                         "New Note",
                         StringComparison.OrdinalIgnoreCase
-                    ) ||
-                    !string.IsNullOrWhiteSpace(
-                        ContentTextBox.Text
-                    ))
-                {
-                    SaveToDatabase(
-                        true
                     );
+
+                if (hasContent ||
+                    titleChanged)
+                {
+                    SaveToDatabase(true);
                 }
             }
-
+            else if (_hasUnsavedChanges)
+            {
+                SaveToDatabase(true);
+            }
 
             DialogResult =
-                _hasUnsavedChanges
-                    ? true
-                    : true;
-
+                true;
 
             Close();
         }
