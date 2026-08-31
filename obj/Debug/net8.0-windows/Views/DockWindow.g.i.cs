@@ -76,7 +76,7 @@ namespace HoldMyNotes.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/HoldMyNotes;component/views/dockwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/HoldMyNotes;V1.0.0.0;component/views/dockwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\DockWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

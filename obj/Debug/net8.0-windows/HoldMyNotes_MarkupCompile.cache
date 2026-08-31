@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\App.xaml
-51084813155
+6-503208076
 
-11825019553
+12-526654028
 202-1457128596
-MainWindow.xaml;Views\AllNotesWindow.xaml;Views\DockWindow.xaml;Views\EdgeRailWindow.xaml;Views\NoteWindow.xaml;
+MainWindow.xaml;Views\AllNotesWindow.xaml;Views\DeleteConfirmWindow.xaml;Views\DockWindow.xaml;Views\EdgeRailWindow.xaml;Views\NoteWindow.xaml;
 
 False
 

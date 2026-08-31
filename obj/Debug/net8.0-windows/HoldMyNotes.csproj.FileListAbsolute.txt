@@ -54,3 +54,5 @@ C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Vie
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\NoteWindow.g.cs
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\AllNotesWindow.baml
 C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\AllNotesWindow.g.cs
+C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\DeleteConfirmWindow.baml
+C:\Users\vkirt\source\repos\HoldMyNotes\HoldMyNotes\obj\Debug\net8.0-windows\Views\DeleteConfirmWindow.g.cs

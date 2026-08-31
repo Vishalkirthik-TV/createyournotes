@@ -323,36 +323,53 @@ namespace HoldMyNotes.Views
         // DELETE
         // ============================================================
 
-        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        private void DeleteButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
             if (!_selectedId.HasValue)
                 return;
 
-            NoteListItem? item = _allNotes.FirstOrDefault(
-                n => n.Id == _selectedId.Value
-            );
+            NoteListItem? item =
+                _allNotes.FirstOrDefault(
+                    n => n.Id == _selectedId.Value
+                );
 
             if (item == null)
                 return;
 
-            MessageBoxResult result = MessageBox.Show(
-                this,
-                $"Delete \"{item.Title}\"?\n\nThis cannot be undone.",
-                "Delete note",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning
-            );
+            DeleteConfirmWindow dialog =
+                new DeleteConfirmWindow(
+                    item.Title
+                );
 
-            if (result != MessageBoxResult.Yes)
+            dialog.Owner =
+                this;
+
+            bool? result =
+                dialog.ShowDialog();
+
+            if (result != true)
                 return;
 
-            using SqliteConnection connection = OpenConnection();
-            using SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Notes WHERE Id = $id;";
-            command.Parameters.AddWithValue("$id", item.Id);
+            using SqliteConnection connection =
+                OpenConnection();
+
+            using SqliteCommand command =
+                connection.CreateCommand();
+
+            command.CommandText =
+                "DELETE FROM Notes WHERE Id = $id;";
+
+            command.Parameters.AddWithValue(
+                "$id",
+                item.Id
+            );
+
             command.ExecuteNonQuery();
 
             _selectedId = null;
+
             ReloadAfterChange();
         }
 
