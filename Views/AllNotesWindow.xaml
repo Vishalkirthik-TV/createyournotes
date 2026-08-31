@@ -1,7 +1,7 @@
 ﻿<Window x:Class="HoldMyNotes.Views.AllNotesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="All Notes"
+        Title="HoldMyNotes"
         Width="1180"
         Height="760"
         MinWidth="900"
@@ -47,7 +47,7 @@
 
 
 		<Style x:Key="ToolbarButton"
-               TargetType="Button">
+               TargetType="{x:Type Button}">
 
 			<Setter Property="Height"
                     Value="36"/>
@@ -92,7 +92,7 @@
 
 				<Setter.Value>
 
-					<ControlTemplate TargetType="Button">
+					<ControlTemplate TargetType="{x:Type Button}">
 
 						<Border x:Name="ButtonBorder"
                                 Background="{TemplateBinding Background}"
@@ -152,7 +152,7 @@
 
 
 		<Style x:Key="DangerButton"
-               TargetType="Button"
+               TargetType="{x:Type Button}"
                BasedOn="{StaticResource ToolbarButton}">
 
 			<Setter Property="Foreground"
@@ -168,7 +168,7 @@
 
 
 		<Style x:Key="FilterButton"
-               TargetType="Button">
+               TargetType="{x:Type Button}">
 
 			<Setter Property="Height"
                     Value="32"/>
@@ -210,7 +210,7 @@
 
 				<Setter.Value>
 
-					<ControlTemplate TargetType="Button">
+					<ControlTemplate TargetType="{x:Type Button}">
 
 						<Border x:Name="FilterBorder"
                                 Background="{TemplateBinding Background}"
@@ -257,7 +257,7 @@
 
 
 		<Style x:Key="NoteListItemStyle"
-               TargetType="ListBoxItem">
+               TargetType="{x:Type ListBoxItem}">
 
 			<Setter Property="Padding"
                     Value="0"/>
@@ -278,7 +278,7 @@
 
 				<Setter.Value>
 
-					<ControlTemplate TargetType="ListBoxItem">
+					<ControlTemplate TargetType="{x:Type ListBoxItem}">
 
 						<Border x:Name="ItemBorder"
                                 Background="Transparent"
@@ -362,6 +362,7 @@
                                Foreground="{StaticResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
 
+
 					<TextBlock Text="{Binding Preview}"
                                Margin="0,4,0,0"
                                FontSize="12.5"
@@ -389,6 +390,7 @@
 
 					</Border>
 
+
 					<TextBlock Text="{Binding RelativeTime}"
                                FontSize="11"
                                Foreground="{StaticResource TextTertiary}"
@@ -399,6 +401,111 @@
 			</Grid>
 
 		</DataTemplate>
+
+
+		<Style x:Key="ModernScrollBar"
+       TargetType="{x:Type ScrollBar}">
+
+			<Setter Property="Width"
+					Value="8"/>
+
+			<Setter Property="Background"
+					Value="Transparent"/>
+
+			<Setter Property="Foreground"
+					Value="#40808080"/>
+
+			<Setter Property="Template">
+
+				<Setter.Value>
+
+					<ControlTemplate TargetType="{x:Type ScrollBar}">
+
+						<Grid Background="Transparent">
+
+							<Track x:Name="PART_Track"
+								   IsDirectionReversed="True">
+
+								<Track.DecreaseRepeatButton>
+
+									<RepeatButton
+										Command="{x:Static ScrollBar.PageUpCommand}"
+										Background="Transparent"
+										BorderThickness="0"
+										Focusable="False"
+										IsTabStop="False"
+										Opacity="0"/>
+
+								</Track.DecreaseRepeatButton>
+
+								<Track.Thumb>
+
+									<Thumb Background="{TemplateBinding Foreground}"
+										   BorderThickness="0"
+										   Cursor="Hand">
+
+										<Thumb.Template>
+
+											<ControlTemplate TargetType="{x:Type Thumb}">
+
+												<Border x:Name="ThumbBorder"
+														Background="{TemplateBinding Background}"
+														CornerRadius="4"
+														Margin="1,0,1,0"/>
+
+												<ControlTemplate.Triggers>
+
+													<Trigger Property="IsMouseOver"
+															 Value="True">
+
+														<Setter TargetName="ThumbBorder"
+																Property="Background"
+																Value="#60707070"/>
+
+													</Trigger>
+
+													<Trigger Property="IsDragging"
+															 Value="True">
+
+														<Setter TargetName="ThumbBorder"
+																Property="Background"
+																Value="#80707070"/>
+
+													</Trigger>
+
+												</ControlTemplate.Triggers>
+
+											</ControlTemplate>
+
+										</Thumb.Template>
+
+									</Thumb>
+
+								</Track.Thumb>
+
+								<Track.IncreaseRepeatButton>
+
+									<RepeatButton
+										Command="{x:Static ScrollBar.PageDownCommand}"
+										Background="Transparent"
+										BorderThickness="0"
+										Focusable="False"
+										IsTabStop="False"
+										Opacity="0"/>
+
+								</Track.IncreaseRepeatButton>
+
+							</Track>
+
+						</Grid>
+
+					</ControlTemplate>
+
+				</Setter.Value>
+
+			</Setter>
+
+		</Style>
 
 	</Window.Resources>
 
@@ -442,7 +549,7 @@
 
 
 				<Button x:Name="ImportButton"
-                        Content="↥  Import…"
+                        Content="Import"
                         Style="{StaticResource ToolbarButton}"
                         MinWidth="94"
                         HorizontalAlignment="Right"
@@ -462,15 +569,15 @@
 
 					<Grid>
 
-						<TextBlock Text="⌕"
-                                   FontSize="21"
+						<TextBlock Text="Search"
+                                   FontSize="13"
                                    Foreground="{StaticResource TextTertiary}"
-                                   Margin="12,0,0,0"
+                                   Margin="14,0,0,0"
                                    VerticalAlignment="Center"/>
 
 
 						<TextBox x:Name="SearchBox"
-                                 Margin="38,0,66,0"
+                                 Margin="70,0,66,0"
                                  BorderThickness="0"
                                  Background="Transparent"
                                  FontSize="14"
@@ -504,11 +611,13 @@
                         Click="FilterButton_Click"
                         Tag="All"/>
 
+
 				<Button x:Name="ActiveFilterButton"
                         Content="Active"
                         Style="{StaticResource FilterButton}"
                         Click="FilterButton_Click"
                         Tag="Active"/>
+
 
 				<Button x:Name="ArchivedFilterButton"
                         Content="Archived"
@@ -520,18 +629,26 @@
 
 
 			<ListBox x:Name="NotesList"
-                     Grid.Row="3"
-                     ItemsSource="{Binding FilteredNotes}"
-                     ItemTemplate="{StaticResource NoteListTemplate}"
-                     ItemContainerStyle="{StaticResource NoteListItemStyle}"
-                     SelectionChanged="NotesList_SelectionChanged"
-                     MouseDoubleClick="NotesList_MouseDoubleClick"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Padding="0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+					 Grid.Row="3"
+					 ItemsSource="{Binding FilteredNotes}"
+					 ItemTemplate="{StaticResource NoteListTemplate}"
+					 ItemContainerStyle="{StaticResource NoteListItemStyle}"
+					 SelectionChanged="NotesList_SelectionChanged"
+					 MouseDoubleClick="NotesList_MouseDoubleClick"
+					 Background="Transparent"
+					 BorderThickness="0"
+					 Padding="0"
+					 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+					 ScrollViewer.VerticalScrollBarVisibility="Auto">
 
+				<ListBox.Resources>
+
+					<Style TargetType="{x:Type ScrollBar}"
+						   BasedOn="{StaticResource ModernScrollBar}"/>
+
+				</ListBox.Resources>
+
+			</ListBox>
 		</Grid>
 
 
@@ -571,6 +688,7 @@
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource TextSecondary}"/>
 
+
 						<TextBlock Text="THE DECK"
                                    FontSize="11.5"
                                    FontWeight="SemiBold"
@@ -592,7 +710,7 @@
 
 
 					<Button x:Name="ExportButton"
-                            Content="Export…"
+                            Content="Export"
                             Style="{StaticResource ToolbarButton}"
                             MinWidth="82"
                             Click="ExportButton_Click"/>
@@ -647,16 +765,21 @@
 
 
 					<ScrollViewer Grid.Row="1"
-                                  Margin="0,18,0,18"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
+								  Margin="0,18,0,18"
+								  VerticalScrollBarVisibility="Auto"
+								  HorizontalScrollBarVisibility="Disabled">
+
+						<ScrollViewer.Resources>
+							<Style TargetType="{x:Type ScrollBar}"
+								   BasedOn="{StaticResource ModernScrollBar}"/>
+						</ScrollViewer.Resources>
 
 						<TextBlock x:Name="DetailContent"
-                                   FontFamily="Segoe Print"
-                                   FontSize="19"
-                                   LineHeight="29"
-                                   Foreground="#FF26313B"
-                                   TextWrapping="Wrap"/>
+								   FontFamily="Segoe Print"
+								   FontSize="19"
+								   LineHeight="29"
+								   Foreground="#FF26313B"
+								   TextWrapping="Wrap"/>
 
 					</ScrollViewer>
 
