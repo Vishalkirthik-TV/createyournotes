@@ -1,9 +1,11 @@
 ---
 /**
  * Hero animation: a desktop mockup whose right-edge rail cycles through the
- * three states — rest (thin stripe) → reach (deck fans out) → open (a note
- * expands in place). A tiny JS state machine toggles `data-phase` on the
- * root; CSS handles the transitions and stagger. Sized with container-query
+ * four states — rest (thin stripe) → approach (the cursor travels to the
+ * rail) → fan (the deck fans out under the cursor) → open (the cursor clicks
+ * and a note expands in place, then the cursor drifts into it). A tiny JS
+ * state machine toggles `data-phase` on the root; CSS handles the cursor
+ * travel, the click ripple, and the stagger. Sized with container-query
  * units (cqw) so the whole thing scales with its column. Falls back to a
  * static "open" frame when the user prefers reduced motion.
  */
@@ -37,7 +39,7 @@ const dashes = ['#9BCFEA', '#9CDBA2', '#D0B9F2', '#FFD83D'];
         <!-- Fanned tabs -->
         {
           tabs.map((t, i) => (
-            <div class="tab" style={`background:${t.color};top:${t.top}cqw;--i:${i}`}>
+            <div class={t.expand ? 'tab tab--target' : 'tab'} style={`background:${t.color};top:${t.top}cqw;--i:${i}`}>
               <span class="tab-label" style={`color:${t.ink}`}>{t.label}</span>
             </div>
           ))
@@ -54,10 +56,16 @@ const dashes = ['#9BCFEA', '#9CDBA2', '#D0B9F2', '#FFD83D'];
           </div>
         </div>
 
+        <!-- New-note action button (rides the rail once the deck is out) -->
+        <div class="new-note-btn" aria-hidden="true">+</div>
+
         <!-- Pointer -->
-        <svg class="cursor" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 2 L5 19 L9.5 15 L12.5 21 L15 20 L12 14 L18 14 Z" fill="#211A30" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" />
-        </svg>
+        <div class="cursor" aria-hidden="true">
+          <svg class="cursor-arrow" viewBox="0 0 24 24">
+            <path d="M5 2 L5 19 L9.5 15 L12.5 21 L15 20 L12 14 L18 14 Z" fill="#211A30" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" />
+          </svg>
+          <span class="cursor-ripple"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -149,51 +157,174 @@ const dashes = ['#9BCFEA', '#9CDBA2', '#D0B9F2', '#FFD83D'];
   [data-phase='fan'] .tab,
   [data-phase='open'] .tab { transform: translateX(0); }
 
-  /* Expanded note card */
+  /* Expanded note card: springs open into the CENTER of the screen
+     (detached from the deck — like opening a note over your desktop) */
   .expanded {
     position: absolute;
-    right: 6cqw;
-    top: 18cqw;
-    width: 32cqw;
-    height: 22cqw;
+    left: 28cqw;
+    top: 14.25cqw;
+    width: 44cqw;
+    height: 34cqw;
     display: flex;
-    border-radius: 1.4cqw;
+    border-radius: 2cqw;
     overflow: hidden;
-    box-shadow: -10px 12px 28px rgba(33, 26, 48, 0.32);
+    box-shadow: -14px 18px 40px rgba(33, 26, 48, 0.38);
+    transform-origin: 100% 50%;
     opacity: 0;
-    transform: translateX(30%);
-    transition: opacity 0.5s ease 0.12s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
+    transform: scaleX(0.16) scaleY(0.55);
+    transition: opacity 0.3s ease 0.1s, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
   }
-  [data-phase='open'] .expanded { opacity: 1; transform: translateX(0); }
+  [data-phase='open'] .expanded {
+    opacity: 1;
+    transform: scale(1);
+    /* waits for the click to land, then springs open from the tab */
+    transition: opacity 0.3s ease 0.55s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.55s;
+  }
   .exp-tab {
-    width: 4cqw;
+    width: 4.4cqw;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
   .exp-tab span {
-    font-size: 1.5cqw;
+    font-size: 1.7cqw;
     font-weight: 800;
     letter-spacing: 0.06em;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
   }
-  .exp-card { flex: 1; background: #ede9fb; padding: 2.4cqw; }
-  .exp-title { font-size: 2.6cqw; font-weight: 800; color: #211a30; font-family: var(--font-display); }
-  .exp-body { margin-top: 1cqw; font-size: 2.6cqw; color: #4a4360; font-family: var(--font-handwriting); }
+  .exp-card { flex: 1; background: #ede9fb; padding: 3cqw; }
+  .exp-title { font-size: 3.6cqw; font-weight: 800; color: #211a30; font-family: var(--font-display); }
+  .exp-body { margin-top: 1.4cqw; font-size: 3.2cqw; color: #4a4360; font-family: var(--font-handwriting); }
 
-  /* Pointer */
+  /* New-note action button that rides the rail with the deck */
+  .new-note-btn {
+    position: absolute;
+    right: 0.8cqw;
+    top: 47cqw;
+    width: 4.6cqw;
+    height: 4.6cqw;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #211a30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 0.4cqw;
+    font-size: 2.8cqw;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(33, 26, 48, 0.3);
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 4;
+  }
+  [data-phase='fan'] .new-note-btn,
+  [data-phase='open'] .new-note-btn {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 0.55s;
+  }
+
+  /* Cursor: travels from mid-desktop to the rail, hovers the target tab,
+     clicks (arrow press + ripple), then drifts into the opened card. */
   .cursor {
     position: absolute;
-    right: 7cqw;
-    top: 31cqw;
-    width: 3cqw;
-    opacity: 0;
-    transition: opacity 0.4s ease 0.45s;
+    left: 46cqw;
+    top: 48cqw;
+    width: 3.4cqw;
     z-index: 5;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    transition:
+      left 1.05s cubic-bezier(0.22, 1, 0.36, 1),
+      top 1.05s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  [data-phase='open'] .cursor { opacity: 1; }
+  .cursor-arrow {
+    display: block;
+    width: 100%;
+    transform-origin: 20% 8%;
+  }
+  .cursor-ripple {
+    position: absolute;
+    left: -2.3cqw;
+    top: -2.7cqw;
+    width: 6cqw;
+    height: 6cqw;
+    border-radius: 999px;
+    border: 0.22cqw solid rgba(255, 255, 255, 0.95);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Phase positions */
+  [data-phase='approach'] .cursor {
+    left: 95.5cqw;
+    top: 27cqw;
+  }
+  [data-phase='fan'] .cursor {
+    left: 95.5cqw;
+    top: 34cqw;
+  }
+  [data-phase='open'] .cursor {
+    left: 52cqw;
+    top: 25.5cqw;
+    /* let the click land on the tab before moving into the card */
+    transition-delay: 1.2s;
+  }
+
+  /* The click */
+  [data-phase='open'] .cursor-arrow {
+    animation: cursorClick 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s 1;
+  }
+  [data-phase='open'] .cursor-ripple {
+    animation: cursorRipple 0.6s ease-out 0.3s 1;
+  }
+
+  @keyframes cursorClick {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.78); }
+    100% { transform: scale(1); }
+  }
+  @keyframes cursorRipple {
+    0% { opacity: 0.95; transform: scale(0.3); }
+    100% { opacity: 0; transform: scale(1.5); }
+  }
+
+  /* Rail reacts as the cursor reaches it */
+  [data-phase='approach'] .stripe {
+    transform: translateY(-50%) scale(1.07);
+  }
+
+  /* Hover ring on the note the cursor is about to click */
+  .tab--target {
+    outline: 0.22cqw solid transparent;
+    outline-offset: -0.22cqw;
+  }
+  [data-phase='fan'] .tab--target,
+  [data-phase='open'] .tab--target {
+    animation: hoverRing 2.4s ease forwards;
+  }
+  @keyframes hoverRing {
+    0%, 30% { outline-color: rgba(255, 255, 255, 0); }
+    45%, 100% { outline-color: rgba(255, 255, 255, 0.92); }
+  }
+
+  /* Static, pleasant frame when the user prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { transition: none; left: 52cqw; top: 25.5cqw; }
+    .cursor-arrow,
+    .cursor-ripple { animation: none; }
+    .expanded,
+    .tab,
+    .stripe,
+    .new-note-btn { transition: none; }
+    [data-phase='open'] .tab--target {
+      animation: none;
+      outline-color: rgba(255, 255, 255, 0.92);
+    }
+  }
 </style>
 
 <script>
@@ -204,8 +335,8 @@ const dashes = ['#9BCFEA', '#9CDBA2', '#D0B9F2', '#FFD83D'];
       // Show a pleasant static "open" frame instead of cycling.
       root.dataset.phase = 'open';
     } else {
-      const phases = ['rest', 'fan', 'open'] as const;
-      const durations = [1700, 2000, 3000]; // ms to linger in each phase
+      const phases = ['rest', 'approach', 'fan', 'open'] as const;
+      const durations = [1600, 1300, 1700, 3200]; // ms to linger in each phase
       let i = 0;
       const tick = () => {
         root.dataset.phase = phases[i];

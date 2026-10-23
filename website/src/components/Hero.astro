@@ -1,5 +1,5 @@
 ---
-import { Download, ArrowRight, Monitor } from '@lucide/astro';
+import { Download, ArrowRight, Monitor, Copy, Check } from '@lucide/astro';
 import { download, siteConfig } from '../config/site';
 import HeroAnimation from './HeroAnimation.astro';
 ---
@@ -10,9 +10,9 @@ import HeroAnimation from './HeroAnimation.astro';
     <div class="absolute -top-56 left-1/2 h-[30rem] w-[42rem] -translate-x-1/2 rounded-full bg-purple/5 blur-3xl"></div>
   </div>
 
-  <div class="mx-auto grid max-w-shell items-center gap-14 px-6 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-10">
+  <div class="mx-auto flex max-w-shell flex-col items-center px-6 sm:px-8 lg:px-10">
     <!-- Copy -->
-    <div class="max-w-xl">
+    <div class="flex w-full max-w-3xl flex-col items-center text-center">
       <div class="animate-fade-up inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-[13px] font-medium text-ink-600 shadow-sm">
         <span class="flex h-4 w-4 items-center justify-center rounded-full bg-purple/10">
           <Monitor size={11} class="text-purple" />
@@ -26,13 +26,13 @@ import HeroAnimation from './HeroAnimation.astro';
         <span class="text-magenta">Your notes.</span>
       </h1>
 
-      <p class="animate-fade-up mt-6 max-w-md text-[17px] leading-relaxed text-ink-500" style="animation-delay:140ms">
+      <p class="animate-fade-up mt-6 max-w-md text-[17px] leading-relaxed text-ink-500 text-center" style="animation-delay:140ms">
         Capture ideas, organize your thoughts, and keep your notes within
         reach. Meet {siteConfig.name}, your personal space for getting ideas out
         of your head and onto the page.
       </p>
 
-      <div class="animate-fade-up mt-8 flex flex-wrap items-center gap-3" style="animation-delay:220ms">
+      <div class="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3" style="animation-delay:220ms">
         <a
           href={download.url}
           target="_blank"
@@ -51,13 +51,28 @@ import HeroAnimation from './HeroAnimation.astro';
         </a>
       </div>
 
-      <p class="animate-fade-up mt-5 text-[13px] text-ink-400" style="animation-delay:280ms">
+      <p class="animate-fade-up mt-6 text-[13px] text-ink-400" style="animation-delay:250ms">
         {download.note}
       </p>
+
+      <div class="animate-fade-up mt-4 inline-flex max-w-full items-center gap-3 overflow-hidden rounded-2xl border border-ink-200 bg-ink-50 py-3 pl-5 pr-4 shadow-sm" style="animation-delay:300ms">
+        <pre id="install-commands" class="max-w-full overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-relaxed text-ink-700 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><span class="select-none text-ink-400">$ </span>scoop bucket add createyournotes https://github.com/vishallinux542/scoop-bucket
+<span class="select-none text-ink-400">$ </span>scoop install createyournotes</pre>
+        <button
+          type="button"
+          id="copy-install-btn"
+          aria-label="Copy install commands"
+          title="Copy install commands"
+          class="shrink-0 rounded-lg p-2 text-ink-400 transition-colors hover:bg-white hover:text-purple focus-visible:outline-2 focus-visible:outline-purple"
+        >
+          <span class="copy-icon block"><Copy size={15} /></span>
+          <span class="check-icon hidden"><Check size={15} /></span>
+        </button>
+      </div>
     </div>
 
-    <!-- Product presentation -->
-    <div class="relative">
+    <!-- Product presentation (below the command line UI) -->
+    <div class="relative mt-14 w-full max-w-5xl lg:mt-16">
       <!-- Floating note previews -->
       <div class="animate-float absolute -left-4 -top-8 z-20 w-40 rotate-[-6deg] rounded-xl bg-gold p-3 shadow-card sm:-left-10">
         <p class="font-display text-[12px] font-bold text-ink/80">Groceries</p>
@@ -80,3 +95,41 @@ import HeroAnimation from './HeroAnimation.astro';
     </div>
   </div>
 </section>
+
+<script>
+  const btn = document.getElementById('copy-install-btn');
+  const block = document.getElementById('install-commands');
+
+  if (btn && block) {
+    btn.addEventListener('click', async () => {
+      // Copy exactly what is displayed, minus the "$ " prompts.
+      const text = block.innerText
+        .split('\n')
+        .map((line) => line.replace(/^\s*\$\s?/, ''))
+        .filter((line) => line.trim().length > 0)
+        .join('\n');
+
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // Fallback for non-secure contexts.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+
+      btn.querySelector('.copy-icon')?.classList.add('hidden');
+      btn.querySelector('.check-icon')?.classList.remove('hidden');
+
+      window.setTimeout(() => {
+        btn.querySelector('.copy-icon')?.classList.remove('hidden');
+        btn.querySelector('.check-icon')?.classList.add('hidden');
+      }, 1600);
+    });
+  }
+</script>
