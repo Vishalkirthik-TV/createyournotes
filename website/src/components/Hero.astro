@@ -1,0 +1,82 @@
+---
+import { Download, ArrowRight, Monitor } from '@lucide/astro';
+import { download, siteConfig } from '../config/site';
+import HeroAnimation from './HeroAnimation.astro';
+---
+
+<section id="main" class="relative overflow-hidden pt-28 pb-16 sm:pt-32 lg:pt-36">
+  <!-- Decorative background (restrained, flat — a single faint tint) -->
+  <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-56 left-1/2 h-[30rem] w-[42rem] -translate-x-1/2 rounded-full bg-purple/5 blur-3xl"></div>
+  </div>
+
+  <div class="mx-auto grid max-w-shell items-center gap-14 px-6 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:px-10">
+    <!-- Copy -->
+    <div class="max-w-xl">
+      <div class="animate-fade-up inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-[13px] font-medium text-ink-600 shadow-sm">
+        <span class="flex h-4 w-4 items-center justify-center rounded-full bg-purple/10">
+          <Monitor size={11} class="text-purple" />
+        </span>
+        Made for {siteConfig.platform} · {siteConfig.requirement}
+      </div>
+
+      <h1 class="animate-fade-up mt-5 font-display text-[2.6rem] font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl" style="animation-delay:60ms">
+        Your thoughts.<br />
+        Your space.<br />
+        <span class="text-magenta">Your notes.</span>
+      </h1>
+
+      <p class="animate-fade-up mt-6 max-w-md text-[17px] leading-relaxed text-ink-500" style="animation-delay:140ms">
+        Capture ideas, organize your thoughts, and keep your notes within
+        reach. Meet {siteConfig.name}, your personal space for getting ideas out
+        of your head and onto the page.
+      </p>
+
+      <div class="animate-fade-up mt-8 flex flex-wrap items-center gap-3" style="animation-delay:220ms">
+        <a
+          href={download.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group inline-flex items-center gap-2 rounded-full bg-purple px-6 py-3.5 text-[15px] font-semibold text-white shadow-lift transition-all duration-200 hover:-translate-y-0.5 hover:bg-purple-dark hover:shadow-[0_20px_40px_-18px_rgba(74,24,174,0.6)]"
+        >
+          <Download size={17} />
+          Download for Windows
+        </a>
+        <a
+          href="#features"
+          class="group inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:border-purple/40 hover:text-purple"
+        >
+          Explore features
+          <ArrowRight size={16} class="transition-transform duration-200 group-hover:translate-x-0.5" />
+        </a>
+      </div>
+
+      <p class="animate-fade-up mt-5 text-[13px] text-ink-400" style="animation-delay:280ms">
+        {download.note}
+      </p>
+    </div>
+
+    <!-- Product presentation -->
+    <div class="relative">
+      <!-- Floating note previews -->
+      <div class="animate-float absolute -left-4 -top-8 z-20 w-40 rotate-[-6deg] rounded-xl bg-gold p-3 shadow-card sm:-left-10">
+        <p class="font-display text-[12px] font-bold text-ink/80">Groceries</p>
+        <p class="mt-1 font-handwriting text-[14px] leading-snug text-ink/70">apples, oat milk, coffee…</p>
+      </div>
+
+      <div class="animate-float-slow absolute -bottom-8 -right-2 z-20 w-40 rotate-[5deg] rounded-xl bg-magenta p-3 shadow-card sm:-right-8" style="animation-delay:1.2s">
+        <p class="font-display text-[12px] font-bold text-white/90">Kyoto</p>
+        <p class="mt-1 font-handwriting text-[14px] leading-snug text-white/80">bamboo groves &amp; ramen…</p>
+      </div>
+
+      <div class="animate-float absolute -right-6 top-6 z-20 hidden w-36 rotate-[7deg] rounded-xl bg-violet p-3 shadow-card lg:block" style="animation-delay:0.6s">
+        <p class="font-display text-[12px] font-bold text-white/90">Ideas</p>
+        <p class="mt-1 font-handwriting text-[14px] leading-snug text-white/80">that app idea…</p>
+      </div>
+
+      <div class="relative z-10 animate-fade-up" style="animation-delay:180ms">
+        <HeroAnimation />
+      </div>
+    </div>
+  </div>
+</section>

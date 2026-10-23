@@ -1,0 +1,88 @@
+---
+/**
+ * Flagship storytelling: the three states of the edge rail.
+ * Rest (thin stripe) → Reach (deck fans out) → Open (preview in place).
+ * Light, warm theme with solid-colour panels (no gradients).
+ */
+const steps = [
+  {
+    step: 'Step 01',
+    title: 'At rest, a slim stripe',
+    body: 'The deck sleeps as a thin, colour-coded stripe on the right edge. No window, nothing in your way.',
+  },
+  {
+    step: 'Step 02',
+    title: 'Reach over, and it fans',
+    body: 'Glide the cursor to the edge and the notes shingle out, one colour per note, each with its own tab.',
+  },
+  {
+    step: 'Step 03',
+    title: 'Open one where it sits',
+    body: 'Hover a tab to preview it in place, or click to open the note and start writing right there.',
+  },
+];
+---
+
+<section class="relative overflow-hidden py-20 sm:py-28">
+  <div class="pointer-events-none absolute inset-0 -z-10 bg-[#efe8da]"></div>
+
+  <div class="relative mx-auto max-w-shell px-6 sm:px-8 lg:px-10">
+    <div class="max-w-2xl">
+      <p class="reveal text-[13px] font-semibold uppercase tracking-[0.18em] text-purple">The edge rail</p>
+      <h2 class="reveal mt-3 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl" style="transition-delay:60ms">
+        Three states, one movement.
+      </h2>
+      <p class="reveal mt-5 text-[17px] leading-relaxed text-ink-600" style="transition-delay:120ms">
+        The deck reacts to where your pointer goes. Nothing is clicked until
+        you decide to write.
+      </p>
+    </div>
+
+    <ol class="mt-14 grid gap-8 md:grid-cols-3">
+      {
+        steps.map((s, i) => (
+          <li class="reveal" style={`transition-delay:${i * 90}ms`}>
+            {/* Solid-colour illustration panel */}
+            <div class="flex h-56 items-center justify-center overflow-hidden rounded-2xl bg-purple/10">
+              {i === 0 && (
+                <div class="flex flex-col gap-2 rounded-full bg-ink px-1.5 py-5">
+                  {['#FFD83D', '#E83EAD', '#8B3DFF', '#FF7A24'].map((c) => (
+                    <span class="h-6 w-2 rounded-full" style={`background:${c}`} />
+                  ))}
+                </div>
+              )}
+              {i === 1 && (
+                <div class="flex items-center gap-2">
+                  {[
+                    { l: 'GROCERIES', c: '#FFD83D' },
+                    { l: 'KYOTO', c: '#E83EAD' },
+                    { l: 'NOTES', c: '#8B3DFF' },
+                    { l: 'PLAN', c: '#FF7A24' },
+                  ].map((t, j) => (
+                    <div
+                      class="flex h-28 w-12 items-center justify-center rounded-l-lg shadow-card"
+                      style={`background:${t.c};transform:translateY(${(j % 2 === 0 ? -1 : 1) * 5}px)`}
+                    >
+                      <span class="rotate-180 text-[8px] font-bold tracking-wider text-ink/70 [writing-mode:vertical-rl]">{t.l}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {i === 2 && (
+                <div class="w-44 rounded-xl bg-white p-4 shadow-card">
+                  <div class="h-2 w-14 rounded-full bg-gold" />
+                  <p class="mt-2 font-display text-sm font-bold text-ink">Groceries</p>
+                  <p class="mt-1 font-handwriting text-[15px] leading-tight text-ink-600">apples, oat milk, coffee…</p>
+                </div>
+              )}
+            </div>
+
+            <p class="mt-6 text-[12px] font-bold uppercase tracking-[0.16em] text-purple">{s.step}</p>
+            <h3 class="mt-2 font-display text-xl font-bold text-ink">{s.title}</h3>
+            <p class="mt-2 text-[15px] leading-relaxed text-ink-600">{s.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

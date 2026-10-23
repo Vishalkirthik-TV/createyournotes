@@ -1,0 +1,36 @@
+---
+import AppWindow from './AppWindow.astro';
+---
+
+<section id="showcase" class="relative overflow-hidden py-20 sm:py-28">
+  <div class="pointer-events-none absolute inset-0 -z-10"></div>
+
+  <div class="mx-auto max-w-shell px-6 sm:px-8 lg:px-10">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="reveal text-[13px] font-semibold uppercase tracking-[0.18em] text-purple">The app</p>
+      <h2 class="reveal mt-3 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl" style="transition-delay:60ms">
+        A little space for<br class="hidden sm:block" /> every big idea.
+      </h2>
+      <p class="reveal mt-5 text-[17px] leading-relaxed text-ink-500" style="transition-delay:120ms">
+        A clean list on the left, an open page on the right. Colour keeps your
+        notes apart, and everything is a keystroke from saved.
+      </p>
+    </div>
+
+    <!-- Big mockup with soft stage lighting -->
+    <div class="reveal relative mx-auto mt-14 max-w-4xl" style="transition-delay:160ms">
+      <div class="pointer-events-none absolute -inset-x-6 -top-6 bottom-0 -z-10 rounded-[2.5rem] bg-purple/8 blur-2xl"></div>
+      <div class="rotate-[-1.2deg] transition-transform duration-500 hover:rotate-0">
+        <AppWindow />
+      </div>
+
+      <!-- Floating accents -->
+      <div class="animate-float absolute -left-6 top-10 hidden rounded-xl bg-gold px-4 py-3 shadow-card lg:block">
+        <p class="font-handwriting text-[15px] text-ink/70">saved automatically</p>
+      </div>
+      <div class="animate-float-slow absolute -right-4 bottom-12 hidden rounded-xl bg-purple px-4 py-3 shadow-card lg:block" style="animation-delay:1s">
+        <p class="font-handwriting text-[15px] text-white/85">5 colours + yours</p>
+      </div>
+    </div>
+  </div>
+</section>

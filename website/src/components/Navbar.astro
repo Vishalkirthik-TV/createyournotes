@@ -1,0 +1,143 @@
+---
+import { Menu, X, Download } from '@lucide/astro';
+import GithubIcon from './GithubIcon.astro';
+import { nav, download, links } from '../config/site';
+---
+
+<header id="site-header" class="fixed inset-x-0 top-0 z-50 transition-all duration-300">
+  <div class="mx-auto flex h-16 max-w-shell items-center gap-3 px-6 sm:px-8 lg:px-10">
+    <a href="/" class="group flex items-center gap-2.5" aria-label={`${import.meta.env.PUBLIC_SITE_NAME ?? 'CreateYourNotes'} home`}>
+      <img src="/images/logo.png" alt="" width="30" height="30" class="h-[30px] w-[30px] transition-transform duration-300 group-hover:-rotate-6" />
+      <span class="font-display text-[17px] font-extrabold tracking-tight text-ink">CreateYourNotes</span>
+    </a>
+
+    <nav class="ml-6 hidden items-center gap-1 md:flex" aria-label="Primary">
+      {
+        nav.map((item) =>
+          item.href.startsWith('#') ? (
+            <a
+              href={item.href}
+              class="rounded-lg px-3 py-2 text-[14px] font-medium text-ink-600 transition-colors hover:bg-ink-100 hover:text-ink"
+            >
+              {item.label}
+            </a>
+          ) : (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[14px] font-medium text-ink-600 transition-colors hover:bg-ink-100 hover:text-ink"
+            >
+              {item.label}
+              <GithubIcon size={14} />
+            </a>
+          ),
+        )
+      }
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2">
+      <a
+        href={download.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hidden items-center gap-2 rounded-full bg-purple px-4 py-2.5 text-[14px] font-semibold text-white shadow-lift transition-all duration-200 hover:-translate-y-0.5 hover:bg-purple-dark sm:inline-flex"
+      >
+        <Download size={15} />
+        Download
+      </a>
+
+      <!-- Mobile menu toggle -->
+      <button
+        id="menu-toggle"
+        type="button"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-ink-100 bg-white text-ink md:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Open navigation menu"
+      >
+        <Menu id="icon-open" size={20} />
+        <X id="icon-close" size={20} class="hidden" />
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden border-t border-ink-100 bg-soft/95 backdrop-blur md:hidden">
+    <nav class="mx-auto max-w-shell space-y-1 px-6 py-4 sm:px-8" aria-label="Mobile">
+      {
+        nav.map((item) =>
+          item.href.startsWith('#') ? (
+            <a href={item.href} class="mobile-link block rounded-lg px-3 py-3 text-[15px] font-medium text-ink-700 hover:bg-ink-100">
+              {item.label}
+            </a>
+          ) : (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mobile-link flex items-center gap-2 rounded-lg px-3 py-3 text-[15px] font-medium text-ink-700 hover:bg-ink-100"
+            >
+              {item.label}
+              <GithubIcon size={15} />
+            </a>
+          ),
+        )
+      }
+      <a
+        href={download.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mt-2 flex items-center justify-center gap-2 rounded-full bg-purple px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-purple-dark"
+      >
+        <Download size={16} />
+        Download for Windows
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById('site-header');
+  const toggle = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+
+  const setOpen = (open: boolean) => {
+    menu?.classList.toggle('hidden', !open);
+    iconOpen?.classList.toggle('hidden', open);
+    iconClose?.classList.toggle('hidden', !open);
+    toggle?.setAttribute('aria-expanded', String(open));
+    toggle?.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+  };
+
+  toggle?.addEventListener('click', () => {
+    setOpen(menu?.classList.contains('hidden') ?? true);
+  });
+
+  // Close the mobile menu when a link inside it is chosen.
+  menu?.querySelectorAll('.mobile-link').forEach((link) => {
+    link.addEventListener('click', () => setOpen(false));
+  });
+
+  // Close on Escape and return focus to the toggle.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu && !menu.classList.contains('hidden')) {
+      setOpen(false);
+      toggle?.focus();
+    }
+  });
+
+  // Solidify the header background after a little scroll.
+  const onScroll = () => {
+    const solid = window.scrollY > 12;
+    header?.classList.toggle('bg-soft/85', solid);
+    header?.classList.toggle('backdrop-blur-md', solid);
+    header?.classList.toggle('border-b', solid);
+    header?.classList.toggle('border-ink-100', solid);
+    header?.classList.toggle('shadow-[0_2px_20px_-12px_rgba(33,26,48,0.4)]', solid);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+</script>

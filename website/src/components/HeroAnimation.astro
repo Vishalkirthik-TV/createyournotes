@@ -1,0 +1,220 @@
+---
+/**
+ * Hero animation: a desktop mockup whose right-edge rail cycles through the
+ * three states — rest (thin stripe) → reach (deck fans out) → open (a note
+ * expands in place). A tiny JS state machine toggles `data-phase` on the
+ * root; CSS handles the transitions and stagger. Sized with container-query
+ * units (cqw) so the whole thing scales with its column. Falls back to a
+ * static "open" frame when the user prefers reduced motion.
+ */
+const tabs = [
+  { label: 'OFFICE', color: '#9BCFEA', ink: '#1f4f5e', top: 14 },
+  { label: 'GROCERIES', color: '#9CDBA2', ink: '#1f4a2c', top: 22 },
+  { label: 'HOLD', color: '#D0B9F2', ink: '#3a2a5c', top: 30, expand: true },
+];
+const dashes = ['#9BCFEA', '#9CDBA2', '#D0B9F2', '#FFD83D'];
+---
+
+<div id="hero-rail" class="relative w-full" data-phase="rest" style="container-type:inline-size">
+  <div class="monitor">
+    <div class="screen">
+      <!-- Desktop chrome -->
+      <div class="wall"></div>
+      <div class="menubar">
+        <span class="m-dot"></span><span class="m-dot"></span><span class="m-dot"></span>
+        <span class="m-sep"></span>
+        <span class="m-dot"></span><span class="m-dot"></span>
+        <span class="m-clock">Sat 9:06</span>
+      </div>
+
+      <!-- Edge rail -->
+      <div class="rail">
+        <!-- Resting stripe -->
+        <div class="stripe">
+          {dashes.map((c) => <span class="dash" style={`background:${c}`}></span>)}
+        </div>
+
+        <!-- Fanned tabs -->
+        {
+          tabs.map((t, i) => (
+            <div class="tab" style={`background:${t.color};top:${t.top}cqw;--i:${i}`}>
+              <span class="tab-label" style={`color:${t.ink}`}>{t.label}</span>
+            </div>
+          ))
+        }
+
+        <!-- Expanded note (the HOLD tab opened in place) -->
+        <div class="expanded">
+          <div class="exp-tab" style={`background:#D0B9F2`}>
+            <span style="color:#3a2a5c">HOLD</span>
+          </div>
+          <div class="exp-card">
+            <p class="exp-title">hold my lid</p>
+            <p class="exp-body">– work on the deck</p>
+          </div>
+        </div>
+
+        <!-- Pointer -->
+        <svg class="cursor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 2 L5 19 L9.5 15 L12.5 21 L15 20 L12 14 L18 14 Z" fill="#211A30" stroke="#fff" stroke-width="1.2" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .monitor {
+    border-radius: 3cqw;
+    background: #171320;
+    padding: 1.5cqw;
+    box-shadow: 0 34px 70px -32px rgba(33, 26, 48, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  .screen {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 1.8cqw;
+    overflow: hidden;
+    background: #7a7fa3;
+  }
+  .wall {
+    position: absolute;
+    inset: 0;
+    /* Solid desktop tone (kept flat to match the site's no-gradient rule) */
+    background: #7a7fa3;
+  }
+
+  /* Desktop menu bar */
+  .menubar {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5cqw;
+    display: flex;
+    align-items: center;
+    gap: 1.2cqw;
+    padding: 0 2cqw;
+    background: rgba(20, 16, 30, 0.16);
+  }
+  .m-dot { width: 1.4cqw; height: 1.4cqw; border-radius: 999px; background: rgba(255, 255, 255, 0.55); }
+  .m-sep { width: 3cqw; height: 1px; background: rgba(255, 255, 255, 0.35); margin: 0 0.4cqw; }
+  .m-clock { margin-left: auto; font-size: 1.7cqw; font-weight: 600; color: rgba(255, 255, 255, 0.8); }
+
+  /* Rail container */
+  .rail { position: absolute; inset: 0; }
+
+  /* Resting stripe */
+  .stripe {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 3cqw;
+    height: 30cqw;
+    border-radius: 999px;
+    background: #1f1a2b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4cqw;
+    transform: translateY(-50%);
+    transition: opacity 0.4s ease, transform 0.5s ease;
+  }
+  .dash { width: 1.2cqw; height: 4cqw; border-radius: 999px; }
+  [data-phase='fan'] .stripe,
+  [data-phase='open'] .stripe { opacity: 0; transform: translateY(-50%) translateX(45%); }
+
+  /* Fanned tabs */
+  .tab {
+    position: absolute;
+    right: 0;
+    width: 6cqw;
+    height: 15cqw;
+    border-radius: 1.8cqw 0 0 1.8cqw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -4px 3px 10px rgba(33, 26, 48, 0.28);
+    transform: translateX(125%);
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--i) * 80ms);
+  }
+  .tab-label {
+    font-size: 1.5cqw;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+  }
+  [data-phase='fan'] .tab,
+  [data-phase='open'] .tab { transform: translateX(0); }
+
+  /* Expanded note card */
+  .expanded {
+    position: absolute;
+    right: 6cqw;
+    top: 18cqw;
+    width: 32cqw;
+    height: 22cqw;
+    display: flex;
+    border-radius: 1.4cqw;
+    overflow: hidden;
+    box-shadow: -10px 12px 28px rgba(33, 26, 48, 0.32);
+    opacity: 0;
+    transform: translateX(30%);
+    transition: opacity 0.5s ease 0.12s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
+  }
+  [data-phase='open'] .expanded { opacity: 1; transform: translateX(0); }
+  .exp-tab {
+    width: 4cqw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .exp-tab span {
+    font-size: 1.5cqw;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .exp-card { flex: 1; background: #ede9fb; padding: 2.4cqw; }
+  .exp-title { font-size: 2.6cqw; font-weight: 800; color: #211a30; font-family: var(--font-display); }
+  .exp-body { margin-top: 1cqw; font-size: 2.6cqw; color: #4a4360; font-family: var(--font-handwriting); }
+
+  /* Pointer */
+  .cursor {
+    position: absolute;
+    right: 7cqw;
+    top: 31cqw;
+    width: 3cqw;
+    opacity: 0;
+    transition: opacity 0.4s ease 0.45s;
+    z-index: 5;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  }
+  [data-phase='open'] .cursor { opacity: 1; }
+</style>
+
+<script>
+  const root = document.getElementById('hero-rail');
+  if (root) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      // Show a pleasant static "open" frame instead of cycling.
+      root.dataset.phase = 'open';
+    } else {
+      const phases = ['rest', 'fan', 'open'] as const;
+      const durations = [1700, 2000, 3000]; // ms to linger in each phase
+      let i = 0;
+      const tick = () => {
+        root.dataset.phase = phases[i];
+        window.setTimeout(() => {
+          i = (i + 1) % phases.length;
+          tick();
+        }, durations[i]);
+      };
+      tick();
+    }
+  }
+</script>

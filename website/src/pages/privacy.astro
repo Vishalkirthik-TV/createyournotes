@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { siteConfig } from '../config/site';
+
+const sections = [
+  {
+    title: 'Stored on your device',
+    body: `${siteConfig.name} keeps your notes in a local database file on your own computer. Your notes are not uploaded to any server, because the app has no server to upload them to.`,
+  },
+  {
+    title: 'No account, no sign-in',
+    body: 'You never create an account or sign in. There is no registration, no login, and no profile associated with using the app.',
+  },
+  {
+    title: 'No tracking or analytics',
+    body: 'The app contains no analytics, telemetry, crash reporting, or third-party tracking SDKs. It does not phone home.',
+  },
+  {
+    title: 'Works offline',
+    body: `${siteConfig.name} makes no network requests as part of normal use. Your notes and your settings stay available with or without an internet connection.`,
+  },
+  {
+    title: 'Export and delete any time',
+    body: 'You can export your notes to plain text or JSON, and deleting a note removes it from the local database after you confirm. You are always in control of your data.',
+  },
+  {
+    title: 'This website',
+    body: 'This marketing website does not use tracking cookies or analytics. If that ever changes, this page will be updated to say so.',
+  },
+];
+---
+
+<BaseLayout title={`Privacy — ${siteConfig.name}`} description={`How ${siteConfig.name} handles your data: locally, privately, and without tracking.`}>
+  <Navbar />
+
+  <main class="pt-28 sm:pt-32">
+    <section class="mx-auto max-w-3xl px-4 pb-20 sm:px-6">
+      <p class="text-[13px] font-semibold uppercase tracking-[0.18em] text-purple">Privacy</p>
+      <h1 class="mt-3 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+        Your notes stay yours.
+      </h1>
+      <p class="mt-5 text-[17px] leading-relaxed text-ink-500">
+        {siteConfig.name} is built to be private by design. Here is exactly how it
+        handles your information — in plain language.
+      </p>
+
+      <div class="mt-12 space-y-6">
+        {
+          sections.map((s) => (
+            <div class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
+              <h2 class="font-display text-lg font-bold text-ink">{s.title}</h2>
+              <p class="mt-2 text-[15px] leading-relaxed text-ink-500">{s.body}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <p class="mt-10 text-[13px] text-ink-400">
+        Last updated {new Date().getFullYear()}. Questions? Open an issue on the
+        <a href="https://github.com/Vishalkirthik-TV/createyournotes" target="_blank" rel="noopener noreferrer" class="text-purple underline underline-offset-2">GitHub repository</a>.
+      </p>
+
+      <a href="/" class="mt-10 inline-flex items-center gap-2 text-[15px] font-semibold text-purple hover:underline">
+        ← Back to home
+      </a>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>

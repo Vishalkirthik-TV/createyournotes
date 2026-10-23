@@ -1,0 +1,98 @@
+---
+import { Download, Heart } from '@lucide/astro';
+import GithubIcon from './GithubIcon.astro';
+import { links, download, nav, siteConfig } from '../config/site';
+
+const year = new Date().getFullYear();
+
+const footerLinks = [
+  { label: 'Features', href: '#features' },
+  { label: 'Screenshots', href: '#showcase' },
+  { label: 'Download', href: '#download' },
+  { label: 'FAQ', href: '#faq' },
+  { label: 'Privacy', href: '/privacy' },
+];
+---
+
+<footer class="border-t border-ink-100 bg-white">
+  <div class="mx-auto max-w-shell px-6 py-14 sm:px-8 lg:px-10">
+    <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+      <!-- Brand -->
+      <div class="max-w-xs">
+        <a href="/" class="flex items-center gap-2.5">
+          <img src="/images/logo.png" alt="" width="28" height="28" class="h-7 w-7" />
+          <span class="font-display text-[17px] font-extrabold tracking-tight text-ink">CreateYourNotes</span>
+        </a>
+        <p class="mt-4 text-[14.5px] leading-relaxed text-ink-500">
+          A lightweight space for your thoughts, kept at the edge of your Windows desktop.
+        </p>
+        <div class="mt-5 flex items-center gap-2">
+          <a
+            href={download.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 rounded-full bg-purple px-4 py-2 text-[13.5px] font-semibold text-white shadow-lift transition-colors hover:bg-purple-dark"
+          >
+            <Download size={14} /> Download
+          </a>
+          <a
+            href={links.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 text-ink-600 transition-colors hover:border-purple/40 hover:text-purple"
+          >
+            <GithubIcon size={16} />
+          </a>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div>
+        <p class="font-display text-[13px] font-bold uppercase tracking-wider text-ink-400">Product</p>
+        <ul class="mt-4 space-y-2.5">
+          {
+            footerLinks.map((l) => (
+              <li>
+                <a href={l.href} class="text-[14.5px] text-ink-500 transition-colors hover:text-purple">
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Resources -->
+      <div>
+        <p class="font-display text-[13px] font-bold uppercase tracking-wider text-ink-400">Resources</p>
+        <ul class="mt-4 space-y-2.5">
+          <li>
+            <a href={links.github} target="_blank" rel="noopener noreferrer" class="text-[14.5px] text-ink-500 transition-colors hover:text-purple">
+              GitHub
+            </a>
+          </li>
+          <li>
+            <a href={links.issues} target="_blank" rel="noopener noreferrer" class="text-[14.5px] text-ink-500 transition-colors hover:text-purple">
+              Report a bug
+            </a>
+          </li>
+          <li>
+            <a href={links.releases} target="_blank" rel="noopener noreferrer" class="text-[14.5px] text-ink-500 transition-colors hover:text-purple">
+              Releases
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-ink-100 pt-6 sm:flex-row">
+      <p class="text-[13px] text-ink-400">
+        © {year} {siteConfig.name}. All rights reserved.
+      </p>
+      <p class="flex items-center gap-1.5 text-[13px] text-ink-400">
+        Made for Windows <Heart size={12} class="text-magenta" />
+      </p>
+    </div>
+  </div>
+</footer>

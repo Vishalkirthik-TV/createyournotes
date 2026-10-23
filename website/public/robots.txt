@@ -1,0 +1,5 @@
+# CreateYourNotes marketing site
+User-agent: *
+Allow: /
+
+Sitemap: https://createyournotes.app/sitemap-index.xml

@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import ProductShowcase from '../components/ProductShowcase.astro';
+import EdgeRailStory from '../components/EdgeRailStory.astro';
+import FeatureRow from '../components/FeatureRow.astro';
+import Benefits from '../components/Benefits.astro';
+import DownloadCTA from '../components/DownloadCTA.astro';
+import FAQ from '../components/FAQ.astro';
+import Footer from '../components/Footer.astro';
+import { features } from '../config/site';
+---
+
+<BaseLayout>
+  <Navbar />
+
+  <main>
+    <Hero />
+    <ProductShowcase />
+    <EdgeRailStory />
+
+    <!-- Alternating feature storytelling -->
+    <section id="features" class="space-y-24 py-20 sm:space-y-28 sm:py-24">
+      <div class="mx-auto max-w-shell px-6 sm:px-8 lg:px-10">
+        <div class="reveal mx-auto mb-4 max-w-2xl text-center">
+          <p class="text-[13px] font-semibold uppercase tracking-[0.18em] text-purple">Features</p>
+          <h2 class="mt-3 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            Everything you need, nothing you don't.
+          </h2>
+        </div>
+
+        <div class="space-y-24 sm:space-y-28">
+          {features.map((feature) => <FeatureRow feature={feature} />)}
+        </div>
+      </div>
+    </section>
+
+    <Benefits />
+    <DownloadCTA />
+    <FAQ />
+  </main>
+
+  <Footer />
+</BaseLayout>

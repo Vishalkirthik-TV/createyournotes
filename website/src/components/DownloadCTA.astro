@@ -1,0 +1,53 @@
+---
+import { Download } from '@lucide/astro';
+import GithubIcon from './GithubIcon.astro';
+import { download, links, siteConfig } from '../config/site';
+---
+
+<section id="download" class="relative overflow-hidden py-20 sm:py-24">
+  <div class="mx-auto max-w-shell px-6 sm:px-8 lg:px-10">
+    <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-purple px-6 py-16 text-center shadow-soft sm:px-16">
+      <!-- Solid decorative accents (no gradients) -->
+      <div class="pointer-events-none absolute inset-0 -z-0">
+        <div class="absolute -left-16 -top-16 h-56 w-56 rounded-full bg-gold/20"></div>
+        <div class="absolute -bottom-20 -right-12 h-64 w-64 rounded-full bg-magenta/25"></div>
+      </div>
+
+      <div class="relative">
+        <img src="/images/logo.png" alt="" width="64" height="64" class="mx-auto h-16 w-16 drop-shadow-lg" />
+        <h2 class="mx-auto mt-6 max-w-2xl font-display text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
+          Ready to make room for your ideas?
+        </h2>
+        <p class="mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-white/80">
+          Give your thoughts a place to live. Get started with {siteConfig.name} for
+          Windows.
+        </p>
+
+        <div class="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <a
+            href={download.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group inline-flex items-center gap-2.5 rounded-full bg-white px-7 py-4 text-[16px] font-bold text-ink shadow-xl transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <Download size={18} class="text-purple" />
+            Download {siteConfig.name}
+          </a>
+          <a
+            href={links.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2.5 rounded-full border border-white/30 bg-white/10 px-7 py-4 text-[16px] font-semibold text-white backdrop-blur transition-colors hover:bg-white/20"
+          >
+            <GithubIcon size={18} />
+            View on GitHub
+          </a>
+        </div>
+
+        <p class="mt-6 text-[13px] text-white/70">
+          {siteConfig.requirement} · No account required
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

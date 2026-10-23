@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* ============================================================
+   CreateYourNotes — design tokens (Tailwind v4 CSS-first config)
+   Brand palette sampled from the 3D folded-document icon:
+   purple -> violet -> magenta folds, golden + orange accents.
+   ============================================================ */
+@theme {
+  /* Brand */
+  --color-purple: #6525e8;
+  --color-purple-dark: #4a18ae;
+  --color-purple-deep: #3a138b;
+  --color-purple-light: #8b5cf2;
+  --color-violet: #8b3dff;
+  --color-magenta: #e83ead;
+  --color-magenta-light: #f56ac6;
+  --color-gold: #ffd83d;
+  --color-gold-dark: #f5c400;
+  --color-orange: #ff7a24;
+  --color-orange-light: #ff9c5c;
+
+  /* Neutrals — warm paper tones sampled from the icon's cream page */
+  --color-soft: #f6f2e9;
+  --color-paper: #fbf9f3;
+  --color-ink: #211a30;
+  --color-ink-700: #372f4d;
+  --color-ink-600: #4a4360;
+  --color-ink-500: #6b6480;
+  --color-ink-400: #8b85a0;
+  --color-ink-300: #b7b2c6;
+  --color-ink-200: #ddd9e8;
+  --color-ink-100: #ecebf3;
+  --color-ink-50: #f6f5fb;
+
+  /* Type */
+  --font-display: "Plus Jakarta Variable", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-handwriting: "Virgil", "Segoe Print", cursive;
+
+  /* Layout — constrained content column so the page never runs full-bleed */
+  --container-shell: 80rem;
+
+  /* Radii */
+  --radius-4xl: 2rem;
+  --radius-5xl: 2.75rem;
+
+  /* Shadows */
+  --shadow-soft: 0 24px 60px -28px rgba(33, 26, 48, 0.35);
+  --shadow-card: 0 18px 45px -22px rgba(33, 26, 48, 0.3);
+  --shadow-lift: 0 34px 80px -30px rgba(101, 37, 232, 0.5);
+  --shadow-glow: 0 0 0 5px rgba(139, 61, 255, 0.14);
+
+  /* Motion */
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-up-slow: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.8s ease both;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
+  --animate-drift-x: drift-x 16s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes drift-x {
+    0%, 100% { transform: translateX(0) rotate(var(--tw-rotate, 0deg)); }
+    50% { transform: translateX(10px) rotate(var(--tw-rotate, 0deg)); }
+  }
+}
+
+/* ============================================================
+   Handwriting font used by the product (and its mockups)
+   ============================================================ */
+@font-face {
+  font-family: "Virgil";
+  src: url("/fonts/Virgil.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+@layer base {
+  :root {
+    color-scheme: light;
+    --ring: var(--color-purple);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-soft);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+  }
+
+  /* Consistent, visible keyboard focus */
+  :focus-visible {
+    outline: 2px solid var(--color-purple);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-ink);
+  }
+}
+
+/* ============================================================
+   Small utilities
+   Brand surfaces/text use SOLID colors from the icon palette via
+   Tailwind tokens (bg-purple, text-magenta, bg-gold …) — no gradients.
+   ============================================================ */
+
+/* Reveal-on-scroll: animated by IntersectionObserver via .reveal.is-visible */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Respect reduced motion: kill animations & transitions */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

@@ -1,0 +1,210 @@
+---
+/**
+ * Per-feature illustration. `visual` selects which mini-mockup renders so
+ * each feature section gets a distinct, on-brand visual instead of a grid
+ * of identical cards.
+ */
+import { Search, Keyboard, HardDrive, Check, Plus } from '@lucide/astro';
+
+interface Props {
+  visual: 'rail' | 'list' | 'editor' | 'palette' | 'hotkey' | 'offline';
+}
+const { visual } = Astro.props;
+
+const chips = ['#FFD83D', '#FF9A8F', '#9CDBA2', '#9BCFEA', '#D0B9F2', '#E83EAD', '#FF7A24'];
+const rows = [
+  { t: 'Groceries', c: '#FFD83D', time: '2m' },
+  { t: 'Kyoto in spring', c: '#E83EAD', time: '1h' },
+  { t: 'Book notes', c: '#8B3DFF', time: '3h' },
+  { t: 'Workout plan', c: '#FF7A24', time: '1d' },
+];
+const tabs = [
+  { label: 'GROCERIES', c: '#FFD83D' },
+  { label: 'KYOTO', c: '#E83EAD' },
+  { label: 'BOOK NOTES', c: '#8B3DFF' },
+];
+---
+
+<div class="relative h-[21rem] w-full overflow-hidden rounded-3xl border border-ink-100 bg-white p-6 shadow-card ring-1 ring-ink-900/5">
+  <div class="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-violet/10 blur-2xl"></div>
+  <div class="pointer-events-none absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-gold/15 blur-2xl"></div>
+
+  {
+    /* ---- Edge rail: thin stripe fanning into tabs + preview ---- */
+    visual === 'rail' && (
+      <div class="relative flex h-full items-stretch justify-end">
+        <div class="flex flex-1 flex-col justify-center pr-4">
+          <p class="font-display text-sm font-semibold text-ink-700">At the edge of your screen</p>
+          <p class="mt-1 text-xs text-ink-400">Reach over and the deck fans out.</p>
+        </div>
+        <div class="relative w-40">
+          {/* resting stripe */}
+          <div class="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col gap-1.5 rounded-full bg-ink px-1 py-3">
+            {['#FFD83D', '#E83EAD', '#8B3DFF', '#FF7A24'].map((c) => (
+              <span class="h-4 w-1.5 rounded-full" style={`background:${c}`} />
+            ))}
+          </div>
+          {/* fanned tabs */}
+          <div class="absolute right-6 top-1/2 flex -translate-y-1/2 flex-col gap-2">
+            {tabs.map((tb, i) => (
+              <div
+                class="flex h-16 w-11 items-center justify-center rounded-l-lg shadow-card"
+                style={`background:${tb.c};margin-right:${i * -6}px;transform:translateX(${i * -2}px)`}
+              >
+                <span class="rotate-180 text-[8px] font-bold tracking-wider text-ink/70 [writing-mode:vertical-rl]">
+                  {tb.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* expanded preview */}
+          <div class="absolute -left-8 top-1/2 w-32 -translate-y-1/2 rounded-xl border border-ink-100 bg-white p-3 shadow-lift">
+            <div class="h-1.5 w-10 rounded-full" style="background:#FFD83D" />
+            <p class="mt-2 font-display text-[11px] font-bold text-ink">Groceries</p>
+            <p class="mt-1 font-handwriting text-[13px] leading-tight text-ink-600">
+              apples, oat milk, coffee beans…
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    /* ---- All Notes list ---- */
+    visual === 'list' && (
+      <div class="relative z-10 flex h-full flex-col">
+        <div class="mb-3 flex items-center gap-2 rounded-lg border border-ink-100 bg-white px-3 py-2 shadow-sm">
+          <Search size={14} class="text-ink-300" />
+          <span class="text-xs text-ink-300">Search all notes…</span>
+        </div>
+        <div class="mb-3 flex gap-1.5">
+          {['All', 'Active', 'Archived'].map((f, i) => (
+            <span
+              class:list={[
+                'rounded-full px-2.5 py-1 text-[11px] font-medium',
+                i === 0 ? 'bg-purple text-white' : 'bg-ink-100 text-ink-500',
+              ]}
+            >
+              {f}
+            </span>
+          ))}
+        </div>
+        <ul class="space-y-2 overflow-hidden">
+          {rows.map((r) => (
+            <li class="flex items-center gap-3 rounded-xl border border-ink-100 bg-white p-2.5">
+              <span class="h-8 w-1.5 shrink-0 rounded-full" style={`background:${r.c}`} />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-[13px] font-semibold text-ink">{r.t}</p>
+                <p class="truncate text-[11px] text-ink-400">A short preview of the note body…</p>
+              </div>
+              <span class="text-[10px] text-ink-300">{r.time}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  {
+    /* ---- Focused editor ---- */
+    visual === 'editor' && (
+      <div class="relative z-10 flex h-full flex-col rounded-2xl border border-ink-100 bg-white p-5 shadow-sm">
+        <p class="font-display text-lg font-bold text-ink">Morning pages</p>
+        <div class="mt-1 h-1 w-12 rounded bg-gold" />
+        <p class="mt-4 font-handwriting text-[19px] leading-[1.8] text-ink-600">
+          Start with the thing<br />that keeps looping in<br />your head. Write it<br />down until it goes quiet.
+        </p>
+        <div class="mt-auto flex items-center justify-between pt-4">
+          <div class="flex gap-1.5">
+            {chips.slice(0, 5).map((c, i) => (
+              <span
+                class="h-4 w-4 rounded-md"
+                style={`background:${c}${i === 0 ? ';box-shadow:0 0 0 2px #fff,0 0 0 3px #211A30' : ''}`}
+              />
+            ))}
+          </div>
+          <span class="flex items-center gap-1 text-[11px] text-ink-300">
+            <span class="h-1.5 w-1.5 rounded-full bg-[#9CDBA2]" /> Saved
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    /* ---- Colour palette / customization ---- */
+    visual === 'palette' && (
+      <div class="relative z-10 flex h-full flex-col">
+        <p class="font-display text-sm font-semibold text-ink-700">Your colours</p>
+        <div class="mt-4 grid grid-cols-4 gap-3">
+          {chips.map((c, i) => (
+            <div
+              class="flex aspect-square items-center justify-center rounded-2xl shadow-sm"
+              style={`background:${c}`}
+            >
+              {i === 6 && <Plus size={18} class="text-white/90" />}
+            </div>
+          ))}
+          <div class="flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed border-ink-200 text-ink-300">
+            <Plus size={18} />
+          </div>
+        </div>
+        <div class="mt-auto rounded-xl border border-ink-100 bg-white p-3">
+          <p class="text-[11px] font-medium text-ink-400">Add custom colour</p>
+          <div class="mt-1.5 flex items-center gap-2">
+            <span class="h-5 w-5 rounded-md" style="background:#E83EAD" />
+            <span class="rounded-md bg-ink-50 px-2 py-1 font-mono text-[11px] text-ink-600">#E83EAD</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    /* ---- Global hotkey ---- */
+    visual === 'hotkey' && (
+      <div class="relative z-10 flex h-full flex-col items-center justify-center">
+        <div class="rounded-2xl border border-ink-100 bg-white p-6 shadow-card">
+          <p class="mb-4 text-center text-[11px] font-medium uppercase tracking-wider text-ink-300">
+            Press your shortcut
+          </p>
+          <div class="flex items-center gap-2">
+            {['Ctrl', 'Shift', 'N'].map((k) => (
+              <kbd class="flex h-12 min-w-12 items-center justify-center rounded-lg border border-ink-200 bg-ink-50 px-3 font-display text-sm font-semibold text-ink-700 shadow-[0_2px_0_#ddd9e8]">
+                {k}
+              </kbd>
+            ))}
+          </div>
+          <div class="mt-5 flex items-center justify-between rounded-lg bg-ink-50 px-3 py-2">
+            <span class="text-[11px] text-ink-400">Global hotkey</span>
+            <span class="flex items-center gap-1 text-[11px] font-medium text-[#3aa06a]">
+              <Check size={12} /> Saved
+            </span>
+          </div>
+        </div>
+        <div class="mt-5 flex items-center gap-1.5 text-xs text-ink-400">
+          <Keyboard size={14} class="text-purple" /> Works from any app
+        </div>
+      </div>
+    )
+  }
+
+  {
+    /* ---- Offline / local ---- */
+    visual === 'offline' && (
+      <div class="relative z-10 flex h-full flex-col items-center justify-center">
+        <div class="relative flex h-40 w-40 items-center justify-center rounded-3xl border border-ink-100 bg-white shadow-card">
+          <div class="absolute inset-0 rounded-3xl bg-purple/10" />
+          <HardDrive size={56} class="relative text-purple" />
+        </div>
+        <p class="mt-6 font-display text-base font-semibold text-ink">Stored on this PC</p>
+        <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {['No account', 'No sync', 'Works offline'].map((t) => (
+            <span class="rounded-full bg-ink-100 px-3 py-1 text-[11px] font-medium text-ink-500">{t}</span>
+          ))}
+        </div>
+      </div>
+    )
+  }
+</div>

@@ -1,0 +1,94 @@
+---
+/**
+ * A CSS mockup of the CreateYourNotes desktop window: title bar, a
+ * searchable note list, and an open note in the handwriting font.
+ * Illustrative only — it mirrors the real app's layout and palette.
+ */
+import { Search } from '@lucide/astro';
+
+const notes = [
+  { title: 'Groceries', preview: 'apples, oat milk, peanut butter, coffee beans…', time: '2m', color: '#FFD83D', active: true },
+  { title: 'Kyoto in spring', preview: 'Bamboo groves, the tiny ramen shop by the river…', time: '1h', color: '#E83EAD' },
+  { title: 'Book notes', preview: 'She finally realizes the letter was never for her.', time: '3h', color: '#8B3DFF' },
+  { title: 'Workout plan', preview: 'Mon legs · Wed pull · Fri push · rest weekends.', time: '1d', color: '#FF7A24' },
+  { title: 'Gift ideas', preview: 'Mum: gardening gloves. Sam: that espresso book.', time: '2d', color: '#6525E8' },
+];
+
+const swatches = ['#FFD83D', '#FF9A8F', '#9CDBA2', '#9BCFEA', '#D0B9F2', '#E83EAD'];
+---
+
+<div
+  class="relative overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft ring-1 ring-ink-900/5"
+>
+  <!-- Title bar -->
+  <div class="flex items-center gap-2.5 border-b border-ink-100 bg-ink-50/70 px-4 py-2.5">
+    <img src="/images/logo.png" alt="" width="18" height="18" class="h-[18px] w-[18px] select-none" />
+    <span class="text-[13px] font-semibold text-ink-700">CreateYourNotes</span>
+    <div class="ml-auto flex items-center gap-3 text-ink-400">
+      <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true"><line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" stroke-width="1.2" /></svg>
+      <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true"><rect x="1.5" y="1.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2" /></svg>
+      <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true"><path d="M2 2 L9 9 M9 2 L2 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-[minmax(0,15rem)_1fr]">
+    <!-- Note list -->
+    <aside class="border-r border-ink-100 bg-soft/60 p-3">
+      <div class="mb-3 flex items-center gap-2 rounded-lg border border-ink-100 bg-white px-2.5 py-1.5">
+        <Search size={13} class="text-ink-300" />
+        <span class="text-[12px] text-ink-300">Search notes…</span>
+      </div>
+
+      <ul class="space-y-1.5">
+        {
+          notes.map((n) => (
+            <li
+              class:list={[
+                'flex gap-2.5 rounded-lg p-2',
+                n.active ? 'bg-white shadow-card ring-1 ring-ink-900/5' : '',
+              ]}
+            >
+              <span class="mt-0.5 h-full w-1 shrink-0 rounded-full" style={`background:${n.color}`} />
+              <div class="min-w-0 flex-1">
+                <div class="flex items-baseline justify-between gap-2">
+                  <p class="truncate text-[12.5px] font-semibold text-ink">{n.title}</p>
+                  <span class="shrink-0 text-[10px] text-ink-300">{n.time}</span>
+                </div>
+                <p class="mt-0.5 truncate text-[11.5px] text-ink-400">{n.preview}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+
+    <!-- Editor -->
+    <section class="relative flex min-h-[19rem] flex-col bg-white p-5">
+      <p class="font-display text-[19px] font-bold text-ink">Groceries</p>
+      <div class="mt-1 h-px w-14 rounded bg-gold" />
+
+      <p class="mt-4 font-handwriting text-[20px] leading-[1.7] text-ink-700">
+        apples, oat milk,<br />
+        peanut butter,<br />
+        coffee beans,<br />
+        sourdough loaf
+      </p>
+
+      <div class="mt-auto flex items-center justify-between pt-5">
+        <div class="flex items-center gap-1.5">
+          {
+            swatches.map((c, i) => (
+              <span
+                class="h-4 w-4 rounded-md"
+                style={`background:${c}${i === 0 ? ';box-shadow:0 0 0 2px #fff,0 0 0 3.5px #211A30' : ''}`}
+              />
+            ))
+          }
+        </div>
+        <span class="flex items-center gap-1 text-[11px] text-ink-300">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#9CDBA2]"></span>Saved
+        </span>
+      </div>
+    </section>
+  </div>
+</div>
