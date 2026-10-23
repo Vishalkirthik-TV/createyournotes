@@ -80,6 +80,25 @@ namespace HoldMyNotes.Data
                 "IsCompleted",
                 "INTEGER NOT NULL DEFAULT 0"
             );
+
+
+            // ========================================================
+            // SETTINGS TABLE (key/value)
+            // ========================================================
+
+            using SqliteCommand settingsCommand =
+                connection.CreateCommand();
+
+            settingsCommand.CommandText = """
+                CREATE TABLE IF NOT EXISTS Settings
+                (
+                    Name TEXT PRIMARY KEY,
+
+                    Value TEXT NOT NULL DEFAULT ''
+                );
+                """;
+
+            settingsCommand.ExecuteNonQuery();
         }
 
 

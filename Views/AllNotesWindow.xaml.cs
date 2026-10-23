@@ -40,6 +40,54 @@ namespace HoldMyNotes.Views
 
             LoadNotes();
             ApplyFilter();
+
+            /*
+             * Start on the Notes tab.
+             */
+            NotesTabButton.IsChecked = true;
+            SettingsTabButton.IsChecked = false;
+            SettingsView.Visibility = Visibility.Collapsed;
+            NotesView.Visibility = Visibility.Visible;
+        }
+
+
+        // ============================================================
+        // TAB NAVIGATION (Notes / Settings)
+        // ============================================================
+
+        private void NotesTabButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            ShowNotesView();
+        }
+
+
+        private void SettingsTabButton_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            ShowSettingsView();
+        }
+
+
+        private void ShowNotesView()
+        {
+            NotesTabButton.IsChecked = true;
+            SettingsTabButton.IsChecked = false;
+
+            NotesView.Visibility = Visibility.Visible;
+            SettingsView.Visibility = Visibility.Collapsed;
+        }
+
+
+        private void ShowSettingsView()
+        {
+            SettingsTabButton.IsChecked = true;
+            NotesTabButton.IsChecked = false;
+
+            SettingsView.Visibility = Visibility.Visible;
+            NotesView.Visibility = Visibility.Collapsed;
         }
 
         // ============================================================

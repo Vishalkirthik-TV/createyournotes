@@ -58,15 +58,29 @@
 
                         <Border x:Name="ButtonBorder"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="11">
+                                CornerRadius="12">
 
-                            <TextBlock Text="{TemplateBinding Content}"
-                                       Foreground="{TemplateBinding Foreground}"
-                                       FontFamily="{TemplateBinding FontFamily}"
-                                       FontSize="{TemplateBinding FontSize}"
-                                       FontWeight="{TemplateBinding FontWeight}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Grid>
+
+                                <Border x:Name="ButtonHoverOverlay"
+                                        Background="#1E000000"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+                                <Border x:Name="ButtonPressedOverlay"
+                                        Background="#30000000"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+                                <TextBlock Text="{TemplateBinding Content}"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontFamily="{TemplateBinding FontFamily}"
+                                           FontSize="{TemplateBinding FontSize}"
+                                           FontWeight="{TemplateBinding FontWeight}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
 
                         </Border>
 
@@ -75,18 +89,94 @@
                             <Trigger Property="IsMouseOver"
                                      Value="True">
 
-                                <Setter TargetName="ButtonBorder"
-                                        Property="Background"
-                                        Value="#FFDEDBD4"/>
+                                <Trigger.EnterActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="ButtonHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="ButtonHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.18">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
 
                             </Trigger>
 
                             <Trigger Property="IsPressed"
                                      Value="True">
 
-                                <Setter TargetName="ButtonBorder"
-                                        Property="Background"
-                                        Value="#FFD2CFC7"/>
+                                <Trigger.EnterActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="ButtonPressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.06"/>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="ButtonPressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.12"/>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
 
                             </Trigger>
 
@@ -122,15 +212,29 @@
 
                         <Border x:Name="DeleteBorder"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="11">
+                                CornerRadius="12">
 
-                            <TextBlock Text="{TemplateBinding Content}"
-                                       Foreground="{TemplateBinding Foreground}"
-                                       FontFamily="{TemplateBinding FontFamily}"
-                                       FontSize="{TemplateBinding FontSize}"
-                                       FontWeight="{TemplateBinding FontWeight}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Grid>
+
+                                <Border x:Name="DeleteHoverOverlay"
+                                        Background="#26000000"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+                                <Border x:Name="DeletePressedOverlay"
+                                        Background="#3A000000"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+                                <TextBlock Text="{TemplateBinding Content}"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontFamily="{TemplateBinding FontFamily}"
+                                           FontSize="{TemplateBinding FontSize}"
+                                           FontWeight="{TemplateBinding FontWeight}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
 
                         </Border>
 
@@ -139,24 +243,94 @@
                             <Trigger Property="IsMouseOver"
                                      Value="True">
 
-                                <Setter TargetName="DeleteBorder"
-                                        Property="Background"
-                                        Value="#FFDDA19A"/>
+                                <Trigger.EnterActions>
 
-                                <Setter Property="Foreground"
-                                        Value="#FF74251F"/>
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="DeleteHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="DeleteHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.18">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
 
                             </Trigger>
 
                             <Trigger Property="IsPressed"
                                      Value="True">
 
-                                <Setter TargetName="DeleteBorder"
-                                        Property="Background"
-                                        Value="#FFD08D85"/>
+                                <Trigger.EnterActions>
 
-                                <Setter Property="Foreground"
-                                        Value="#FF631F19"/>
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="DeletePressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.06"/>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="DeletePressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.12"/>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
 
                             </Trigger>
 
@@ -199,12 +373,21 @@
                                 Background="Transparent"
                                 CornerRadius="9">
 
-                            <TextBlock Text="X"
-                                       FontFamily="Segoe UI"
-                                       FontSize="15"
-                                       Foreground="#FF97938B"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Grid>
+
+                                <Border x:Name="CloseHoverOverlay"
+                                        Background="#FFEAE8E1"
+                                        CornerRadius="9"
+                                        Opacity="0"/>
+
+                                <TextBlock Text="X"
+                                           FontFamily="Segoe UI"
+                                           FontSize="15"
+                                           Foreground="#FF97938B"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                            </Grid>
 
                         </Border>
 
@@ -213,9 +396,55 @@
                             <Trigger Property="IsMouseOver"
                                      Value="True">
 
-                                <Setter TargetName="CloseBorder"
-                                        Property="Background"
-                                        Value="#FFEAE8E1"/>
+                                <Trigger.EnterActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="CloseHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.13">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="CloseHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
 
                             </Trigger>
 

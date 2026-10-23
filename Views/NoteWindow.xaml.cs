@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,6 +9,7 @@ using System.Windows.Threading;
 
 using HoldMyNotes.Data;
 using HoldMyNotes.Models;
+using HoldMyNotes.Services;
 
 namespace HoldMyNotes.Views
 {
@@ -71,6 +74,8 @@ namespace HoldMyNotes.Views
 
             ConfigureForNewNote();
 
+            BuildColorButtons();
+
             UpdateNoteSurfaceColor(
                 _selectedColor
             );
@@ -112,6 +117,8 @@ namespace HoldMyNotes.Views
                 CreateAutoSaveTimer();
 
             LoadExistingNote();
+
+            BuildColorButtons();
 
             UpdateNoteSurfaceColor(
                 _selectedColor
@@ -494,14 +501,15 @@ namespace HoldMyNotes.Views
 
         private void SelectCurrentColor()
         {
-            Button[] buttons =
-            {
-                YellowButton,
-                CoralButton,
-                GreenButton,
-                BlueButton,
-                PurpleButton
-            };
+            /*
+             * The palette lives in ColorButtonsPanel: the five default
+             * buttons come from XAML, and any custom colors added in
+             * Settings are generated into the same panel at runtime.
+             */
+            IEnumerable<Button> buttons =
+                ColorButtonsPanel.Children
+                    .OfType<Button>()
+                    .ToList();
 
             foreach (
                 Button button
@@ -535,6 +543,50 @@ namespace HoldMyNotes.Views
 
                     break;
                 }
+            }
+        }
+
+
+        /*
+         * Build a swatch button for a single palette colour.
+         *
+         * Every swatch — default and custom — is created here so they are
+         * pixel-identical (same size, margin, style and shadow). This is
+         * why the palette no longer mixes XAML-declared buttons with
+         * code-created ones, which used to misalign.
+         */
+        private Button CreateColorButton(string color)
+        {
+            Button button =
+                new Button
+                {
+                    Tag = color,
+                    Background = (
+                        SolidColorBrush)new BrushConverter().ConvertFrom(color)!,
+                    Style = (Style)FindResource("ColorButtonStyle"),
+                    Margin = new Thickness(0, 0, 7, 0)
+                };
+
+            button.Click +=
+                ColorButton_Click;
+
+            return button;
+        }
+
+
+        /*
+         * Rebuild the whole palette (defaults first, then any custom
+         * colours) through the single CreateColorButton path.
+         */
+        private void BuildColorButtons()
+        {
+            ColorButtonsPanel.Children.Clear();
+
+            foreach (string color in NotePalette.AllColors)
+            {
+                ColorButtonsPanel.Children.Add(
+                    CreateColorButton(color)
+                );
             }
         }
 

@@ -78,21 +78,192 @@
 
                     <ControlTemplate TargetType="Button">
 
-                        <Grid>
+                        <Grid x:Name="AddRoot"
+                              RenderTransformOrigin="0.5,0.5">
 
-                            <Ellipse Fill="#FFF1F1F1"
-                                     Stroke="#FFD0D0D0"
-                                     StrokeThickness="1"/>
+                            <Grid.RenderTransform>
+
+                                <ScaleTransform ScaleX="1"
+                                                ScaleY="1"/>
+
+                            </Grid.RenderTransform>
+
+                            <Ellipse x:Name="AddCircle"
+                                     Fill="#FFFFFFFF"
+                                     Stroke="#FFE2E0D9"
+                                     StrokeThickness="1">
+
+                                <Ellipse.Effect>
+
+                                    <DropShadowEffect BlurRadius="14"
+                                                      ShadowDepth="2"
+                                                      Direction="270"
+                                                      Opacity="0.2"/>
+
+                                </Ellipse.Effect>
+
+                            </Ellipse>
 
                             <TextBlock Text="+"
                                        FontFamily="Segoe UI"
                                        FontSize="20"
-                                       Foreground="#FF454545"
+                                       FontWeight="Light"
+                                       Foreground="#FF4A4845"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
-                                       Margin="0,-2,0,0"/>
+                                       Margin="0,-1,0,0"/>
 
                         </Grid>
+
+                        <ControlTemplate.Triggers>
+
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+
+                                <Trigger.EnterActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1.12"
+                                                             Duration="0:0:0.16">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1.12"
+                                                             Duration="0:0:0.16">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1"
+                                                             Duration="0:0:0.2">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1"
+                                                             Duration="0:0:0.2">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
+
+                            </Trigger>
+
+                            <Trigger Property="IsPressed"
+                                     Value="True">
+
+                                <Trigger.EnterActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="0.92"
+                                                             Duration="0:0:0.07"/>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="0.92"
+                                                             Duration="0:0:0.07"/>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+
+                                    <BeginStoryboard>
+
+                                        <Storyboard>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             To="1.12"
+                                                             Duration="0:0:0.14">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                            <DoubleAnimation Storyboard.TargetName="AddRoot"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                             To="1.12"
+                                                             Duration="0:0:0.14">
+
+                                                <DoubleAnimation.EasingFunction>
+
+                                                    <QuinticEase EasingMode="EaseOut"/>
+
+                                                </DoubleAnimation.EasingFunction>
+
+                                            </DoubleAnimation>
+
+                                        </Storyboard>
+
+                                    </BeginStoryboard>
+
+                                </Trigger.ExitActions>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
 
                     </ControlTemplate>
 

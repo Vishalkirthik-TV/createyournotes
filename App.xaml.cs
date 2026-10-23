@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Windows;
 
 using Forms = System.Windows.Forms;
 using DrawingIcon = System.Drawing.Icon;
+
+using HoldMyNotes.Data;
+using HoldMyNotes.Services;
 
 namespace HoldMyNotes
 {
@@ -13,20 +15,64 @@ namespace HoldMyNotes
 
         private DrawingIcon? _trayIconImage;
 
+        private Views.AllNotesWindow? _allNotesWindow;
+
         protected override void OnStartup(
-            StartupEventArgs e)
+            System.Windows.StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            CreateTrayIcon();
+            try
+            {
+                Database.Initialize();
+
+                /*
+                 * Load persisted settings, push the configured fonts into
+                 * the application resources, and register the global
+                 * hotkey that opens the All Notes view.
+                 */
+                AppSettings.Load();
+
+                AppSettings.ApplyFonts();
+
+                HotkeyService.Initialize();
+
+                HotkeyService.Pressed += OpenAllNotesWindow;
+
+                HotkeyService.Apply(
+                    AppSettings.GlobalHotkey
+                );
+
+                CreateTrayIcon();
+
+                MainWindow mainWindow =
+                    new MainWindow();
+
+                MainWindow =
+                    mainWindow;
+
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    ex.ToString(),
+                    "HoldMyNotes startup error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error
+                );
+
+                Shutdown();
+            }
         }
+
 
         private void CreateTrayIcon()
         {
             Uri resourceUri =
                 new Uri(
-                    "/HoldMyNotes;component/Assets/HoldMyNotes.ico",
-                    UriKind.Relative
+                    "pack://application:,,,/HoldMyNotes;component/Assets/HoldMyNotes.ico",
+                    UriKind.Absolute
                 );
 
             System.Windows.Resources.StreamResourceInfo? resource =
@@ -34,14 +80,24 @@ namespace HoldMyNotes
 
             if (resource == null)
             {
-                return;
+                throw new InvalidOperationException(
+                    "HoldMyNotes.ico could not be loaded as a WPF resource."
+                );
             }
 
-            using Stream stream =
-                resource.Stream;
+            using MemoryStream memoryStream =
+                new MemoryStream();
+
+            resource.Stream.CopyTo(
+                memoryStream
+            );
+
+            memoryStream.Position = 0;
 
             _trayIconImage =
-                new DrawingIcon(stream);
+                new DrawingIcon(
+                    memoryStream
+                );
 
 
             _trayIcon =
@@ -64,7 +120,7 @@ namespace HoldMyNotes
 
             Forms.ToolStripItem openItem =
                 menu.Items.Add(
-                    "Open"
+                    "Open All Notes"
                 );
 
             openItem.Click +=
@@ -107,28 +163,47 @@ namespace HoldMyNotes
                 menu;
 
 
-            _trayIcon.DoubleClick +=
-                (_, _) =>
+            _trayIcon.MouseClick +=
+                (_, args) =>
                 {
-                    OpenAllNotesWindow();
+                    if (args.Button ==
+                        Forms.MouseButtons.Left)
+                    {
+                        OpenAllNotesWindow();
+                    }
                 };
         }
 
 
         private void OpenAllNotesWindow()
         {
-            Views.AllNotesWindow window =
-                new Views.AllNotesWindow();
-
-            window.Show();
-            window.Activate();
-
-            if (window.WindowState ==
-                WindowState.Minimized)
+            /*
+             * Reuse a single All Notes window so the tray action and the
+             * global hotkey focus it instead of stacking duplicates. A
+             * closed window cannot be re-shown, so we null the reference
+             * in the Closed handler and build a fresh one when needed.
+             */
+            if (_allNotesWindow == null)
             {
-                window.WindowState =
-                    WindowState.Normal;
+                _allNotesWindow =
+                    new Views.AllNotesWindow();
+
+                _allNotesWindow.Closed +=
+                    (_, _) =>
+                    {
+                        _allNotesWindow = null;
+                    };
             }
+
+            _allNotesWindow.Show();
+
+            _allNotesWindow.WindowState =
+                System.Windows.WindowState.Normal;
+
+            _allNotesWindow.Activate();
+
+            _allNotesWindow.Topmost = true;
+            _allNotesWindow.Topmost = false;
         }
 
 
@@ -166,7 +241,7 @@ namespace HoldMyNotes
 
 
         protected override void OnExit(
-            ExitEventArgs e)
+            System.Windows.ExitEventArgs e)
         {
             if (_trayIcon != null)
             {

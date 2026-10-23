@@ -1,6 +1,7 @@
 ﻿<Window x:Class="HoldMyNotes.Views.AllNotesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:HoldMyNotes.Views"
         Title="HoldMyNotes"
         Width="1180"
         Height="760"
@@ -98,12 +99,26 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="11">
+                                CornerRadius="12">
 
-							<ContentPresenter
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Margin="{TemplateBinding Padding}"/>
+							<Grid>
+
+								<Border x:Name="HoverOverlay"
+                                        Background="#FFF1EFE8"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+								<Border x:Name="PressedOverlay"
+                                        Background="#FFE3E0D6"
+                                        CornerRadius="12"
+                                        Opacity="0"/>
+
+								<ContentPresenter
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Margin="{TemplateBinding Padding}"/>
+
+							</Grid>
 
 						</Border>
 
@@ -112,22 +127,94 @@
 							<Trigger Property="IsMouseOver"
                                      Value="True">
 
-								<Setter TargetName="ButtonBorder"
-                                        Property="Background"
-                                        Value="#FFF0EEE7"/>
+								<Trigger.EnterActions>
 
-								<Setter TargetName="ButtonBorder"
-                                        Property="BorderBrush"
-                                        Value="#FFD4D0C5"/>
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.18">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
 							<Trigger Property="IsPressed"
                                      Value="True">
 
-								<Setter TargetName="ButtonBorder"
-                                        Property="Background"
-                                        Value="#FFE1DED4"/>
+								<Trigger.EnterActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="PressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.06"/>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="PressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.12"/>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
@@ -218,10 +305,24 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10">
 
-							<ContentPresenter
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Margin="{TemplateBinding Padding}"/>
+							<Grid>
+
+								<Border x:Name="FilterHoverOverlay"
+                                        Background="#FFECEAE2"
+                                        CornerRadius="10"
+                                        Opacity="0"/>
+
+								<Border x:Name="FilterPressedOverlay"
+                                        Background="#FFE1DED4"
+                                        CornerRadius="10"
+                                        Opacity="0"/>
+
+								<ContentPresenter
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Margin="{TemplateBinding Padding}"/>
+
+							</Grid>
 
 						</Border>
 
@@ -230,18 +331,94 @@
 							<Trigger Property="IsMouseOver"
                                      Value="True">
 
-								<Setter TargetName="FilterBorder"
-                                        Property="Background"
-                                        Value="#FFECEAE2"/>
+								<Trigger.EnterActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="FilterHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="FilterHoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.18">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
 							<Trigger Property="IsPressed"
                                      Value="True">
 
-								<Setter TargetName="FilterBorder"
-                                        Property="Background"
-                                        Value="#FFE1DED4"/>
+								<Trigger.EnterActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="FilterPressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.06"/>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="FilterPressedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.12"/>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
@@ -285,7 +462,21 @@
                                 CornerRadius="13"
                                 Padding="0">
 
-							<ContentPresenter/>
+							<Grid>
+
+								<Border x:Name="HoverOverlay"
+                                        Background="#FFF1EFE8"
+                                        CornerRadius="13"
+                                        Opacity="0"/>
+
+								<Border x:Name="SelectedOverlay"
+                                        Background="#FFE7E4DB"
+                                        CornerRadius="13"
+                                        Opacity="0"/>
+
+								<ContentPresenter/>
+
+							</Grid>
 
 						</Border>
 
@@ -294,18 +485,110 @@
 							<Trigger Property="IsMouseOver"
                                      Value="True">
 
-								<Setter TargetName="ItemBorder"
-                                        Property="Background"
-                                        Value="#FFF0EEE7"/>
+								<Trigger.EnterActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.14">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.18">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
 							<Trigger Property="IsSelected"
                                      Value="True">
 
-								<Setter TargetName="ItemBorder"
-                                        Property="Background"
-                                        Value="#FFE5E2D9"/>
+								<Trigger.EnterActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1"
+                                                             Duration="0:0:0.16">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.EnterActions>
+
+								<Trigger.ExitActions>
+
+									<BeginStoryboard>
+
+										<Storyboard>
+
+											<DoubleAnimation Storyboard.TargetName="SelectedOverlay"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0"
+                                                             Duration="0:0:0.16">
+
+												<DoubleAnimation.EasingFunction>
+
+													<QuinticEase EasingMode="EaseOut"/>
+
+												</DoubleAnimation.EasingFunction>
+
+											</DoubleAnimation>
+
+										</Storyboard>
+
+									</BeginStoryboard>
+
+								</Trigger.ExitActions>
 
 							</Trigger>
 
@@ -358,15 +641,15 @@
 
 					<TextBlock Text="{Binding Title}"
                                FontSize="15"
-                               FontWeight="SemiBold"
+                               FontWeight="Bold"
                                Foreground="{StaticResource TextPrimary}"
                                TextTrimming="CharacterEllipsis"/>
 
 
 					<TextBlock Text="{Binding Preview}"
                                Margin="0,4,0,0"
-                               FontSize="12.5"
-                               FontFamily="Segoe Print"
+                               FontSize="13"
+                               FontFamily="{DynamicResource HandwritingFont}"
                                Foreground="{StaticResource TextSecondary}"
                                TextTrimming="CharacterEllipsis"/>
 
@@ -507,10 +790,158 @@
 
 		</Style>
 
+
+		<!-- Top navigation tab (Notes / Settings) -->
+		<Style x:Key="NavTabButton"
+               TargetType="{x:Type ToggleButton}">
+
+			<Setter Property="Cursor"
+                    Value="Hand"/>
+
+			<Setter Property="Foreground"
+                    Value="{StaticResource TextSecondary}"/>
+
+			<Setter Property="FontSize"
+                    Value="14"/>
+
+			<Setter Property="FontWeight"
+                    Value="SemiBold"/>
+
+			<Setter Property="Template">
+
+				<Setter.Value>
+
+					<ControlTemplate TargetType="{x:Type ToggleButton}">
+
+						<Grid Background="Transparent">
+
+							<Border x:Name="TabBg"
+                                    Background="Transparent"
+                                    Padding="16,11">
+
+								<ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+
+							</Border>
+
+							<Border x:Name="Indicator"
+                                    Height="3"
+                                    VerticalAlignment="Bottom"
+                                    Margin="12,0"
+                                    Background="{StaticResource TextPrimary}"
+                                    CornerRadius="2"
+                                    Opacity="0"/>
+
+						</Grid>
+
+						<ControlTemplate.Triggers>
+
+							<Trigger Property="IsMouseOver"
+                                     Value="True">
+
+								<Setter TargetName="TabBg"
+                                        Property="Background"
+                                        Value="{StaticResource HoverSurface}"/>
+
+							</Trigger>
+
+							<Trigger Property="IsChecked"
+                                     Value="True">
+
+								<Setter TargetName="Indicator"
+                                        Property="Opacity"
+                                        Value="1"/>
+
+								<Setter Property="Foreground"
+                                        Value="{StaticResource TextPrimary}"/>
+
+							</Trigger>
+
+						</ControlTemplate.Triggers>
+
+					</ControlTemplate>
+
+				</Setter.Value>
+
+			</Setter>
+
+		</Style>
+
 	</Window.Resources>
 
 
 	<Grid Background="{StaticResource WindowBackground}">
+
+		<Grid.RowDefinitions>
+
+			<RowDefinition Height="Auto"/>
+
+			<RowDefinition Height="*"/>
+
+		</Grid.RowDefinitions>
+
+
+		<!-- ================================================= -->
+		<!-- TOP NAVIGATION (Notes / Settings)                -->
+		<!-- ================================================= -->
+
+		<Border Grid.Row="0"
+                Background="{StaticResource PanelBackground}"
+                BorderBrush="{StaticResource SoftBorder}"
+                BorderThickness="0,0,0,1"
+                Padding="18,6">
+
+			<StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center">
+
+				<ToggleButton x:Name="NotesTabButton"
+                              Style="{StaticResource NavTabButton}"
+                              IsChecked="True"
+                              Click="NotesTabButton_Click">
+
+					<StackPanel Orientation="Horizontal">
+
+						<TextBlock Text="All Notes"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,0,1"/>
+
+					</StackPanel>
+
+				</ToggleButton>
+
+				<ToggleButton x:Name="SettingsTabButton"
+                              Style="{StaticResource NavTabButton}"
+                              Click="SettingsTabButton_Click">
+
+					<StackPanel Orientation="Horizontal">
+
+						<!-- Gear glyph -->
+						<TextBlock Text="&#xE713;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="15"
+                                   VerticalAlignment="Center"
+                                   Margin="0,-1,8,0"/>
+
+						<TextBlock Text="Settings"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,0,1"/>
+
+					</StackPanel>
+
+				</ToggleButton>
+
+			</StackPanel>
+
+		</Border>
+
+
+		<!-- ================================================= -->
+		<!-- NOTES VIEW                                       -->
+		<!-- ================================================= -->
+
+		<Grid x:Name="NotesView"
+              Grid.Row="1">
 
 		<Grid.ColumnDefinitions>
 
@@ -561,11 +992,82 @@
 			<Grid Grid.Row="1"
                   Margin="0,16,0,10">
 
-				<Border Background="#FFECEAE2"
-                        BorderBrush="#FFE0DDD4"
+				<Border Background="#FFFCFBF8"
                         BorderThickness="1"
-                        CornerRadius="12"
+                        CornerRadius="13"
                         Height="42">
+
+					<Border.BorderBrush>
+
+						<SolidColorBrush Color="#FFE0DDD4"/>
+
+					</Border.BorderBrush>
+
+					<Border.Style>
+
+						<Style TargetType="{x:Type Border}">
+
+							<Style.Triggers>
+
+								<DataTrigger Binding="{Binding IsKeyboardFocusWithin,
+                                                                ElementName=SearchBox}"
+                                             Value="True">
+
+									<DataTrigger.EnterActions>
+
+										<BeginStoryboard>
+
+											<Storyboard>
+
+												<ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                                To="#FFB9B4A8"
+                                                                Duration="0:0:0.16">
+
+													<ColorAnimation.EasingFunction>
+
+														<QuinticEase EasingMode="EaseOut"/>
+
+													</ColorAnimation.EasingFunction>
+
+												</ColorAnimation>
+
+											</Storyboard>
+
+										</BeginStoryboard>
+
+									</DataTrigger.EnterActions>
+
+									<DataTrigger.ExitActions>
+
+										<BeginStoryboard>
+
+											<Storyboard>
+
+												<ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                                To="#FFE0DDD4"
+                                                                Duration="0:0:0.2">
+
+													<ColorAnimation.EasingFunction>
+
+														<QuinticEase EasingMode="EaseOut"/>
+
+													</ColorAnimation.EasingFunction>
+
+												</ColorAnimation>
+
+											</Storyboard>
+
+										</BeginStoryboard>
+
+									</DataTrigger.ExitActions>
+
+								</DataTrigger>
+
+							</Style.Triggers>
+
+						</Style>
+
+					</Border.Style>
 
 					<Grid>
 
@@ -750,7 +1252,7 @@
 
 						<TextBlock x:Name="DetailTitle"
                                    FontSize="23"
-                                   FontWeight="SemiBold"
+                                   FontWeight="Bold"
                                    Foreground="#FF20252A"
                                    TextTrimming="CharacterEllipsis"/>
 
@@ -775,9 +1277,9 @@
 						</ScrollViewer.Resources>
 
 						<TextBlock x:Name="DetailContent"
-								   FontFamily="Segoe Print"
-								   FontSize="19"
-								   LineHeight="29"
+								   FontFamily="{DynamicResource HandwritingFont}"
+								   FontSize="20"
+								   LineHeight="31"
 								   Foreground="#FF26313B"
 								   TextWrapping="Wrap"/>
 
@@ -803,6 +1305,18 @@
 			</Border>
 
 		</Grid>
+
+		</Grid><!-- /NotesView -->
+
+
+		<!-- ================================================= -->
+		<!-- SETTINGS VIEW                                     -->
+		<!-- ================================================= -->
+
+		<views:SettingsPanel x:Name="SettingsView"
+                             Grid.Row="1"
+                             Visibility="Collapsed"
+                             Margin="24,18,0,0"/>
 
 	</Grid>
 

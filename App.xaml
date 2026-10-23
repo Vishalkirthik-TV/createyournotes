@@ -1,9 +1,21 @@
 ﻿<Application x:Class="HoldMyNotes.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:HoldMyNotes"
-             StartupUri="MainWindow.xaml">
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:local="clr-namespace:HoldMyNotes">
     <Application.Resources>
-         
+
+        <!--
+            Handwriting font for note bodies and previews.
+            Loaded from the embedded Virgil.ttf (converted from the
+            WOFF2 in /fonts — WPF cannot read .woff2 directly).
+            "Virgil 3 YOFF" is the font's internal family name.
+        -->
+        <FontFamily x:Key="HandwritingFont">/HoldMyNotes;component/Assets/Fonts/#Virgil 3 YOFF</FontFamily>
+
+        <!--
+            UI / headings font.
+        -->
+        <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
+
     </Application.Resources>
-</Application>
+    </Application>

@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-	 <ImplicitUsings>disable</ImplicitUsings>
+	<ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
 	<ApplicationIcon>Assets\HoldMyNotes.ico</ApplicationIcon>
@@ -12,14 +12,16 @@
 
   <ItemGroup>
     <None Remove="Assets\HoldMyNotes.ico" />
+    <Resource Include="Assets\HoldMyNotes.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Fonts\Virgil.ttf" />
+    <Resource Include="Assets\Fonts\Virgil.ttf" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Assets\HoldMyNotes.ico" />
   </ItemGroup>
 
 </Project>

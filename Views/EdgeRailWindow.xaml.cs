@@ -11,6 +11,7 @@ using System.Windows.Threading;
 
 using HoldMyNotes.Data;
 using HoldMyNotes.Models;
+using HoldMyNotes.Services;
 using HoldMyNotes.Views;
 
 namespace HoldMyNotes
@@ -62,6 +63,15 @@ namespace HoldMyNotes
 
         private const double TabHeight = 125;
 
+        /*
+         * Breathing room reserved at the top and bottom of a
+         * fan-out tab's vertical heading. The heading is rotated
+         * -90 degrees and vertically centered, so constraining
+         * its length leaves symmetric padding at both ends
+         * instead of letting a long title run edge to edge.
+         */
+        private const double TabHeadingVerticalPadding = 13;
+
         private const double TabGap = -7;
 
         private const double StackOffsetX = 6;
@@ -110,11 +120,11 @@ namespace HoldMyNotes
         // ANIMATION
         // ============================================================
 
-        private const int FanDurationMs = 210;
+        private const int FanDurationMs = 230;
 
         private const int FanStaggerMs = 45;
 
-        private const int HoverDurationMs = 220;
+        private const int HoverDurationMs = 240;
 
         private const int CollapseDelayMs = 170;
 
@@ -823,47 +833,64 @@ namespace HoldMyNotes
             // ADD BUTTON
             // ========================================================
 
-            /*
-             * Calculate from the SAME centered deck geometry.
-             */
-            double deckBottom =
-                GetFiveCardDeckBottom(
-                    visibleCount
-                );
+            double addButtonTop;
 
 
             /*
-             * If +N exists, extend the deck to include it.
+             * With no notes there is no deck to sit below,
+             * so centre + on the resting rail instead of
+             * hanging it off an empty deck.
              */
-            if (_moreTab != null)
+            if (visibleCount <= 0)
             {
-                double moreTop =
-                    Canvas.GetTop(
-                        _moreTab
+                addButtonTop =
+                    RailTop +
+                    (RailHeight - AddButtonSize) / 2.0;
+            }
+            else
+            {
+                /*
+                 * Calculate from the SAME centered deck geometry.
+                 */
+                double deckBottom =
+                    GetFiveCardDeckBottom(
+                        visibleCount
                     );
 
 
-                if (double.IsNaN(moreTop))
+                /*
+                 * If +N exists, extend the deck to include it.
+                 */
+                if (_moreTab != null)
                 {
-                    moreTop =
-                        GetMoreTabTop();
+                    double moreTop =
+                        Canvas.GetTop(
+                            _moreTab
+                        );
+
+
+                    if (double.IsNaN(moreTop))
+                    {
+                        moreTop =
+                            GetMoreTabTop();
+                    }
+
+
+                    deckBottom =
+                        Math.Max(
+                            deckBottom,
+                            moreTop +
+                            MoreHeight
+                        );
                 }
 
 
-                deckBottom =
-                    Math.Max(
-                        deckBottom,
-                        moreTop +
-                        MoreHeight
-                    );
+                /*
+                 * + lives immediately below the deck.
+                 */
+                addButtonTop =
+                    deckBottom + 8;
             }
-
-
-            /*
-             * + lives immediately below the deck.
-             */
-            double addButtonTop =
-                deckBottom + 8;
 
 
             Canvas.SetLeft(
@@ -1007,7 +1034,7 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 }
             );
 
@@ -1032,11 +1059,11 @@ namespace HoldMyNotes
 
                     Duration =
                         TimeSpan.FromMilliseconds(
-                            120
+                            160
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 }
             );
         }
@@ -1195,11 +1222,11 @@ namespace HoldMyNotes
 
                     Duration =
                         TimeSpan.FromMilliseconds(
-                            120
+                            160
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 }
             );
         }
@@ -1306,11 +1333,13 @@ namespace HoldMyNotes
                 new System.Windows.Media.Effects
                     .DropShadowEffect
                 {
-                    BlurRadius = 5,
+                    BlurRadius = 16,
 
-                    ShadowDepth = 1,
+                    ShadowDepth = 3,
 
-                    Opacity = 0.12
+                    Direction = 270,
+
+                    Opacity = 0.16
                 };
 
 
@@ -1364,6 +1393,18 @@ namespace HoldMyNotes
                             0,
                             0
                         ),
+
+                    /*
+                     * Cap the heading length so that after the
+                     * -90 degree rotation it does not run the full
+                     * tab height. Combined with VerticalAlignment.Center
+                     * this leaves symmetric padding at the top and
+                     * bottom, and long titles trim with an ellipsis
+                     * instead of touching the edges.
+                     */
+                    MaxWidth =
+                        TabHeight -
+                        (2 * TabHeadingVerticalPadding),
 
                     TextTrimming =
                         TextTrimming.CharacterEllipsis,
@@ -1804,14 +1845,18 @@ namespace HoldMyNotes
                         note.Content ??
                         string.Empty,
 
+                    /*
+                     * Use the handwriting font chosen in Settings so the
+                     * rail preview matches the note windows.
+                     */
                     FontFamily =
                         new FontFamily(
-                            "Segoe Print"
+                            AppSettings.NoteFontSource
                         ),
 
-                    FontSize = 18,
+                    FontSize = 19,
 
-                    LineHeight = 27,
+                    LineHeight = 29,
 
                     Foreground =
                         new SolidColorBrush(
@@ -2052,13 +2097,14 @@ namespace HoldMyNotes
              * Right edge remains fixed.
              *
              * ExpandedLeft + ExpandedWidth = RightEdge
+             *
+             * No From values: if the tab is mid-collapse the
+             * animations blend from where it actually is
+             * instead of snapping to a stale base value.
              */
             DoubleAnimation leftAnimation =
                 new DoubleAnimation
                 {
-                    From =
-                        Canvas.GetLeft(tab),
-
                     To =
                         ExpandedLeft,
 
@@ -2068,16 +2114,13 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 };
 
 
             DoubleAnimation widthAnimation =
                 new DoubleAnimation
                 {
-                    From =
-                        TabWidth,
-
                     To =
                         ExpandedWidth,
 
@@ -2087,16 +2130,13 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 };
 
 
             DoubleAnimation heightAnimation =
                 new DoubleAnimation
                 {
-                    From =
-                        TabHeight,
-
                     To =
                         ExpandedHeight,
 
@@ -2106,7 +2146,7 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 };
 
 
@@ -2156,11 +2196,11 @@ namespace HoldMyNotes
 
                     Duration =
                         TimeSpan.FromMilliseconds(
-                            150
+                            170
                         ),
 
                     EasingFunction =
-                        EaseOut()
+                        EaseOutQuint()
                 }
             );
         }
@@ -2269,7 +2309,7 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseInOut()
+                        EaseInOutQuint()
                 };
 
 
@@ -2285,7 +2325,7 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseInOut()
+                        EaseInOutQuint()
                 };
 
 
@@ -2301,13 +2341,25 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseInOut()
+                        EaseInOutQuint()
                 };
 
 
             left.Completed +=
                 (_, _) =>
                 {
+                    /*
+                     * The tab was re-expanded while this collapse
+                     * was still running. Leave the fresh expand
+                     * alone, otherwise the tab flickers back to
+                     * the stacked state.
+                     */
+                    if (_expandedTab == tab)
+                    {
+                        return;
+                    }
+
+
                     preview.Visibility =
                         Visibility.Collapsed;
 
@@ -2582,8 +2634,15 @@ namespace HoldMyNotes
                 Visibility.Visible;
 
 
-            AddButton.Opacity =
-                1;
+            /*
+             * Soft fade instead of an instant pop-in.
+             */
+            AnimateOpacity(
+                AddButton,
+                0,
+                1,
+                170
+            );
         }
 
 
@@ -2601,6 +2660,18 @@ namespace HoldMyNotes
                     MaxVisibleCards,
                     _notes.Count
                 );
+
+
+            /*
+             * Mirror the fan-out placement exactly so the
+             * hover hit-test matches what is on screen.
+             */
+            if (visibleCount <= 0)
+            {
+                return
+                    RailTop +
+                    (RailHeight - AddButtonSize) / 2.0;
+            }
 
 
             double deckBottom =
@@ -2783,7 +2854,7 @@ namespace HoldMyNotes
                         ),
 
                     EasingFunction =
-                        EaseInOut()
+                        EaseInOutQuint()
                 }
             );
         }
@@ -2812,6 +2883,31 @@ namespace HoldMyNotes
         private static CubicEase EaseInOut()
         {
             return new CubicEase
+            {
+                EasingMode =
+                    EasingMode.EaseInOut
+            };
+        }
+
+
+        /*
+         * Quintic curves decelerate more gently than the
+         * cubic ones, which is what makes UI motion feel
+         * "soft" rather than snappy.
+         */
+        private static QuinticEase EaseOutQuint()
+        {
+            return new QuinticEase
+            {
+                EasingMode =
+                    EasingMode.EaseOut
+            };
+        }
+
+
+        private static QuinticEase EaseInOutQuint()
+        {
+            return new QuinticEase
             {
                 EasingMode =
                     EasingMode.EaseInOut
