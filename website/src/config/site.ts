@@ -41,7 +41,7 @@ export const siteConfig = {
   /** Canonical domain — update if the site is deployed elsewhere. */
   url: 'https://createyournotes.app',
   platform: 'Windows',
-  requirement: 'Windows 10 or later',
+  requirement: 'Windows 10 / 11 and later',
 } as const;
 
 /**
@@ -66,7 +66,7 @@ export const download = {
   url: 'https://github.com/Vishalkirthik-TV/createyournotes/releases/latest',
   label: 'Download for Windows',
   shortLabel: 'Download',
-  note: 'Free download · Windows 10 or later',
+  note: 'Free download · Windows 10 / 11 and later',
 } as const;
 
 export const nav: NavItem[] = [
@@ -182,7 +182,7 @@ export const faq: FaqItem[] = [
   {
     question: 'Which operating systems are supported?',
     answer:
-      'CreateYourNotes is a Windows desktop application, built for Windows 10 and later. It is not available for macOS, Linux, or the web.',
+      'CreateYourNotes is a Windows desktop application, built for Windows 10 / 11 and later. It is not available for macOS, Linux, or the web.',
   },
   {
     question: 'How do I install it?',
